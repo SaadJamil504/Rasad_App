@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -6,18 +6,70 @@ import {
   TouchableOpacity,
   View,
   SafeAreaView,
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { ENDPOINTS } from "../../constants/Api";
 
 export default function CustomerHome() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<any>({});
+  const [deliveryStatus, setDeliveryStatus] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
 
-  const history = [
-    { day: "Today", liters: "5L", amount: "Rs 1,050" },
-    { day: "Yesterday", liters: "5L", amount: "Rs 1,050" },
-    { day: "Mon", liters: "7L", amount: "Rs 1,470" },
-  ];
+  useEffect(() => {
+    fetchCustomerData();
+  }, []);
+
+  const fetchCustomerData = async () => {
+    setIsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const [profRes, statRes, histRes] = await Promise.all([
+        fetch(ENDPOINTS.PROFILE, { headers }).catch(() => ({ ok: false, json: () => ({}) })),
+        fetch(ENDPOINTS.DELIVERIES_STATUS, { headers }).catch(() => ({ ok: false, json: () => null })),
+        fetch(ENDPOINTS.DELIVERIES_HISTORY, { headers }).catch(() => ({ ok: false, json: () => [] }))
+      ]);
+
+      const profData = profRes.ok ? await profRes.json() : {};
+      const statData = statRes.ok ? await statRes.json() : null;
+      const histData = histRes.ok ? await histRes.json() : [];
+
+      setProfile(profData);
+      setDeliveryStatus(statData);
+      setHistory(Array.isArray(histData) ? histData : (histData.results || []));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync('userToken');
+    router.replace("/login");
+  };
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  const bal = parseFloat(profile.outstanding_balance || 0);
+  const isClear = bal <= 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -29,14 +81,15 @@ export default function CustomerHome() {
         <View style={styles.header}>
           <View>
             <Text style={styles.urduWelcome}>السلام علیکم</Text>
-            <Text style={styles.welcomeName}>Sana Bibi</Text>
+            <Text style={styles.welcomeName}>{profile.first_name || profile.full_name || profile.username || "Customer"}</Text>
             <TouchableOpacity style={styles.businessLink}>
-              <Text style={styles.businessName}>Ahmed Doodh Wala</Text>
+              <Text style={styles.businessName}>{profile.owner_dairy_name || "Assigned Dairy"}</Text>
               <Ionicons name="checkmark-circle" size={14} color="#3b82f6" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.profileButton}>
-            <Ionicons name="person-circle-outline" size={32} color="#000" />
+          <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={32} color="#000" />
+            <Text style={{ fontSize: 10, textAlign: 'center', color: '#6b7280' }}>Out</Text>
           </TouchableOpacity>
         </View>
 
@@ -44,10 +97,12 @@ export default function CustomerHome() {
         <View style={styles.balanceCard}>
           <Text style={styles.urduBalance}>آپ کا بقایا</Text>
           <Text style={styles.balanceLabel}>Your balance</Text>
-          <Text style={styles.balanceAmount}>Rs 0</Text>
-          <View style={styles.balanceStatus}>
-            <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
-            <Text style={styles.statusText}>All clear this month</Text>
+          <Text style={styles.balanceAmount}>Rs {bal.toLocaleString()}</Text>
+          <View style={[styles.balanceStatus, isClear ? {} : { backgroundColor: "rgba(239, 68, 68, 0.1)" }]}>
+            <Ionicons name={isClear ? "checkmark-circle" : "alert-circle"} size={16} color={isClear ? "#22c55e" : "#ef4444"} />
+            <Text style={[styles.statusText, isClear ? {} : { color: "#ef4444" }]}>
+              {isClear ? "All clear this month" : "Payment Due"}
+            </Text>
           </View>
         </View>
 
@@ -55,7 +110,7 @@ export default function CustomerHome() {
         <View style={styles.actionsContainer}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push("/(customer)/pause")}
+            onPress={() => router.push("/(customer)/pause" as any)}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
               <Ionicons name="pause" size={24} color="#2563eb" />
@@ -66,7 +121,7 @@ export default function CustomerHome() {
 
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push("/(customer)/quantity")}
+            onPress={() => router.push("/(customer)/quantity" as any)}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
               <Ionicons name="list" size={24} color="#16a34a" />
@@ -91,15 +146,25 @@ export default function CustomerHome() {
         </View>
         <View style={styles.deliveryCard}>
           <View style={styles.deliveryInfo}>
-            <View style={styles.checkBadge}>
-              <Ionicons name="checkmark" size={16} color="#22c55e" />
+            <View style={[styles.checkBadge, { backgroundColor: deliveryStatus?.status === 'delivered' ? "#f0fdf4" : (deliveryStatus?.status === 'paused' ? "#fef3c7" : "#eff6ff") }]}>
+              <Ionicons 
+                name={deliveryStatus?.status === 'delivered' ? "checkmark" : (deliveryStatus?.status === 'paused' ? "pause" : "time")} 
+                size={16} 
+                color={deliveryStatus?.status === 'delivered' ? "#22c55e" : (deliveryStatus?.status === 'paused' ? "#d97706" : "#3b82f6")} 
+              />
             </View>
             <View>
-              <Text style={styles.deliveryText}>Delivered at 5:42 AM</Text>
-              <Text style={styles.urduDeliveryTime}>صبح ۵:۴۲ بجے ڈیلیور ہوا</Text>
+              <Text style={styles.deliveryText}>
+                {deliveryStatus?.status === 'delivered' 
+                  ? `Delivered at ${new Date(deliveryStatus.delivered_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` 
+                  : (deliveryStatus?.status === 'paused' ? "Delivery Paused" : "Pending Delivery")}
+              </Text>
+              <Text style={styles.urduDeliveryTime}>
+                {deliveryStatus?.status === 'delivered' ? 'ڈیلیور ہو گیا' : (deliveryStatus?.status === 'paused' ? 'ڈیلیوری رکی ہوئی ہے' : 'ڈیلیوری باقی ہے')}
+              </Text>
             </View>
           </View>
-          <Text style={styles.deliveryLiters}>5L</Text>
+          <Text style={styles.deliveryLiters}>{deliveryStatus?.quantity || profile.daily_quantity || 0}L</Text>
         </View>
 
         {/* Weekly History */}
@@ -109,17 +174,21 @@ export default function CustomerHome() {
         </View>
         <View style={styles.historyTable}>
           <View style={styles.tableHeader}>
-            <Text style={styles.columnLabel}>DAY</Text>
-            <Text style={styles.columnLabel}>LITERS</Text>
+            <Text style={styles.columnLabel}>DATE</Text>
+            <Text style={[styles.columnLabel, { flex: 1, textAlign: 'center' }]}>STATUS</Text>
+            <Text style={[styles.columnLabel, { flex: 1, textAlign: 'center' }]}>LITERS</Text>
             <Text style={[styles.columnLabel, { textAlign: 'right' }]}>AMOUNT</Text>
           </View>
-          {history.map((item, index) => (
+          {history.length > 0 ? history.slice(0, 7).map((item: any, index: number) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={styles.cellDay}>{item.day}</Text>
-              <Text style={styles.cellLiters}>{item.liters}</Text>
-              <Text style={styles.cellAmount}>{item.amount}</Text>
+              <Text style={styles.cellDay}>{item.date ? new Date(item.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Unknown'}</Text>
+              <Text style={[styles.cellLiters, { color: item.status === 'delivered' ? '#16a34a' : '#9ca3af', fontWeight: '500' }]}>{item.status}</Text>
+              <Text style={styles.cellLiters}>{parseFloat(item.quantity || 0)}L</Text>
+              <Text style={styles.cellAmount}>Rs {parseFloat(item.total_amount || 0)}</Text>
             </View>
-          ))}
+          )) : (
+            <Text style={{ textAlign: "center", padding: 20, color: "#9ca3af" }}>No history available yet.</Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

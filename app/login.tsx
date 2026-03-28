@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 import { BASE_URL } from "../constants/Api";
+
 import React, { useState } from "react";
 import {
   Alert,
@@ -60,6 +62,11 @@ export default function LoginScreen() {
       }
 
       if (response.ok) {
+        // Save the access token securely
+        if (data.access) {
+          await SecureStore.setItemAsync('userToken', data.access);
+        }
+        
         setIsLoading(false);
         // Success: Redirect based on role
         if (selectedRole === "Customer") {
@@ -69,6 +76,7 @@ export default function LoginScreen() {
         } else {
           router.replace("/(tabs)" as any);
         }
+
       } else {
         setIsLoading(false);
         Alert.alert("Login Failed", data.error || data.detail || "Invalid phone number or password");

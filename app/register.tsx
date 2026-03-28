@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { ENDPOINTS } from "../constants/Api";
+
 import {
   Alert,
   KeyboardAvoidingView,
@@ -20,7 +22,12 @@ export default function RegisterScreen() {
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
 
   // Step 2: Delivery Type
   const [deliveryType, setDeliveryType] = useState("solo");
@@ -44,10 +51,15 @@ export default function RegisterScreen() {
       Alert.alert("Error", "Please enter WhatsApp number");
       return;
     }
+    if (!email.trim() || !email.includes('@')) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
     if (!city.trim()) {
       Alert.alert("Error", "Please enter city/area");
       return;
     }
+
     setCurrentStep(2);
   };
 
@@ -55,7 +67,7 @@ export default function RegisterScreen() {
     setCurrentStep(3);
   };
 
-  const handleStep3Complete = async () => {
+  const handleStep3Continue = () => {
     if (!perLiterPrice.trim()) {
       Alert.alert("Error", "Please enter per liter price");
       return;
@@ -64,30 +76,93 @@ export default function RegisterScreen() {
       Alert.alert("Error", "Please enter half liter price");
       return;
     }
+    setCurrentStep(4);
+  };
+
+  const handleStep4Complete = async () => {
+    if (!password.trim()) {
+      Alert.alert("Error", "Please enter a password");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const registrationData = {
-        businessName,
-        ownerName,
-        whatsapp,
-        city,
-        deliveryType,
-        perLiterPrice,
-        halfLiterPrice,
-      };
-      console.log("Registration data:", registrationData);
+      const response = await fetch(ENDPOINTS.SIGNUP, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: password,
+          full_name: ownerName,
+          phone_number: whatsapp,
+          email: email,
+          role: 'owner',
+          house_no: "N/A",
+          street: "N/A",
+          area: "N/A",
+          city: city, // User's input from the Address field
+          address: city, // User's input from the Address field
+          latitude: "24.8607", // Default placeholder
+          longitude: "67.0011", // Default placeholder
+          dairy_name: businessName,
+          cow_price: perLiterPrice,
+          buffalo_price: halfLiterPrice,
+        }),
 
-      // Simulating API call
-      setTimeout(() => {
+
+
+
+
+      });
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("❌ Backend returned HTML instead of JSON:", text.substring(0, 500));
+        Alert.alert("Server Error", "Registration failed. The server returned an invalid response.");
         setIsLoading(false);
-        router.replace("/(tabs)");
-      }, 1000);
+        return;
+      }
+
+      if (response.ok) {
+        setIsLoading(false);
+        Alert.alert("Success", "Account created successfully! Please login.", [
+          { text: "OK", onPress: () => router.replace("/login") }
+        ]);
+      } else {
+        setIsLoading(false);
+        // Better error handling for Django REST Framework
+        let errorMessage = "Something went wrong. Please check your details.";
+        if (data.error) errorMessage = data.error;
+        else if (data.detail) errorMessage = data.detail;
+        else if (typeof data === 'object') {
+          // If data is a dictionary of fields, join them
+          const firstKey = Object.keys(data)[0];
+          const firstError = data[firstKey];
+          errorMessage = `${firstKey}: ${Array.isArray(firstError) ? firstError[0] : firstError}`;
+        }
+        
+        Alert.alert("Registration Failed", errorMessage);
+      }
+
     } catch (error) {
       setIsLoading(false);
-      Alert.alert("Error", "Setup failed. Please try again.");
+      console.error("Registration Error:", error);
+      Alert.alert("Connection Error", "Could not connect to the server. Please check your internet.");
     }
   };
+
 
   const handleBackToLogin = () => {
     router.back();
@@ -97,7 +172,7 @@ export default function RegisterScreen() {
     const steps = 3;
     return (
       <View style={styles.progressContainer}>
-        {[1, 2, 3].map((step) => (
+        {[1, 2, 3, 4].map((step) => (
           <View
             key={step}
             style={[
@@ -106,6 +181,7 @@ export default function RegisterScreen() {
             ]}
           />
         ))}
+
       </View>
     );
   };
@@ -125,7 +201,8 @@ export default function RegisterScreen() {
             <View style={styles.card}>
               <View style={styles.stepHeader}>
                 <Text style={styles.stepTitle}>Q1 — Business Info</Text>
-                <Text style={styles.stepNumber}>STEP 1/3</Text>
+                <Text style={styles.stepNumber}>STEP 1/4</Text>
+
               </View>
 
               {renderProgressBar()}
@@ -134,7 +211,7 @@ export default function RegisterScreen() {
               <Text style={styles.urduText}>اپنے کاروبار کو ترتیب دیں</Text>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Business Name</Text>
+                <Text style={styles.label}>Dairy Name</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Ahmed Doodh Wala"
@@ -144,6 +221,7 @@ export default function RegisterScreen() {
                   editable={!isLoading}
                 />
               </View>
+
 
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Your Name</Text>
@@ -158,7 +236,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>WhatsApp</Text>
+                <Text style={styles.label}>Phone No</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="03XX-XXXXXXX"
@@ -170,8 +248,23 @@ export default function RegisterScreen() {
                 />
               </View>
 
+
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>City / Area</Text>
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. name@example.com"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Address</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Johar Town, Lahore"
@@ -181,6 +274,8 @@ export default function RegisterScreen() {
                   editable={!isLoading}
                 />
               </View>
+
+
 
               <TouchableOpacity
                 style={styles.continueButton}
@@ -197,7 +292,8 @@ export default function RegisterScreen() {
             <View style={styles.card}>
               <View style={styles.stepHeader}>
                 <Text style={styles.stepTitle}>Q2 — Delivery Type</Text>
-                <Text style={styles.stepNumber}>STEP 2/3</Text>
+                <Text style={styles.stepNumber}>STEP 2/4</Text>
+
               </View>
 
               {renderProgressBar()}
@@ -278,7 +374,8 @@ export default function RegisterScreen() {
             <View style={styles.card}>
               <View style={styles.stepHeader}>
                 <Text style={styles.stepTitle}>Q3 — Milk Rate</Text>
-                <Text style={styles.stepNumber}>STEP 3/3</Text>
+                <Text style={styles.stepNumber}>STEP 3/4</Text>
+
               </View>
 
               {renderProgressBar()}
@@ -287,7 +384,7 @@ export default function RegisterScreen() {
               <Text style={styles.urduText}>اپنی دوہ کی شرح مقرر کریں</Text>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Per Liter Rs</Text>
+                <Text style={styles.label}>Cow Milk Price (Rs)</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="210"
@@ -299,8 +396,9 @@ export default function RegisterScreen() {
                 />
               </View>
 
+
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Half Liter Rs</Text>
+                <Text style={styles.label}>Buffalo Milk Price (Rs)</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="105"
@@ -312,6 +410,7 @@ export default function RegisterScreen() {
                 />
               </View>
 
+
               {/* Info Box */}
               <View style={styles.infoBox}>
                 <Text style={styles.infoBoxCheckmark}>✓</Text>
@@ -321,16 +420,74 @@ export default function RegisterScreen() {
               </View>
 
               <TouchableOpacity
+                style={styles.continueButton}
+                onPress={handleStep3Continue}
+                disabled={isLoading}
+              >
+                <Text style={styles.continueButtonText}>Continue →</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Step 4: Security */}
+          {currentStep === 4 && (
+            <View style={styles.card}>
+              <View style={styles.stepHeader}>
+                <Text style={styles.stepTitle}>Q4 — Account Security</Text>
+                <Text style={styles.stepNumber}>STEP 4/4</Text>
+              </View>
+
+              {renderProgressBar()}
+
+              <Text style={styles.heading}>Secure your account</Text>
+              <Text style={styles.urduText}>اپنا اکاؤنٹ محفوظ کریں</Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Create Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Min. 6 characters"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Repeat password"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  editable={!isLoading}
+                />
+              </View>
+
+              {/* Info Box */}
+              <View style={styles.infoBox}>
+                <Text style={styles.infoBoxCheckmark}>🛡️</Text>
+                <Text style={styles.infoBoxText}>
+                  Use a strong password to keep data safe
+                </Text>
+              </View>
+
+              <TouchableOpacity
                 style={[styles.continueButton, styles.startButton]}
-                onPress={handleStep3Complete}
+                onPress={handleStep4Complete}
                 disabled={isLoading}
               >
                 <Text style={styles.startButtonText}>
-                  {isLoading ? "Setting up..." : "Start using Rasad 🚀"}
+                  {isLoading ? "Creating Account..." : "Start using Rasad 🚀"}
                 </Text>
               </TouchableOpacity>
             </View>
           )}
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

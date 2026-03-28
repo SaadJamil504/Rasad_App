@@ -1,0 +1,2223 @@
+openapi: 3.0.3
+info:
+  title: Rasad API
+  version: 1.0.0
+  description: Milk Delivery Management System API
+paths:
+  /api/accounts/adjustments/action/{id}/:
+    post:
+      operationId: accounts_adjustments_action_create
+      description: Driver accepts or rejects an adjustment request.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAdjustment'
+          description: ''
+  /api/accounts/adjustments/create/:
+    post:
+      operationId: accounts_adjustments_create_create
+      description: Customer creates a pause or quantity change request.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryAdjustment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliveryAdjustment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliveryAdjustment'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAdjustment'
+          description: ''
+  /api/accounts/adjustments/list/:
+    get:
+      operationId: accounts_adjustments_list_list
+      description: List adjustment requests. Drivers see for their route, Owners see
+        for all their customers.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeliveryAdjustment'
+          description: ''
+  /api/accounts/alerts/:
+    get:
+      operationId: accounts_alerts_retrieve
+      description: Get overdue customers and today's paused deliveries for owner.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/collection-stats/:
+    get:
+      operationId: accounts_collection_stats_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/dashboard/alerts/:
+    get:
+      operationId: accounts_dashboard_alerts_retrieve
+      description: Get overdue customers and today's paused deliveries for owner.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/dashboard/reports/:
+    get:
+      operationId: accounts_dashboard_reports_retrieve
+      description: Get an analytical report for the owner including total milk, revenue
+        and chart data.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/dashboard/stats/:
+    get:
+      operationId: accounts_dashboard_stats_retrieve
+      description: Get summary stats for the owner's dashboard.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/deliveries/daily/:
+    get:
+      operationId: accounts_deliveries_daily_list
+      description: Get today's deliveries for the driver's route. Creates them if
+        they don't exist.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/deliveries/history/:
+    get:
+      operationId: accounts_deliveries_history_list
+      description: Get full delivery history for the user.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/deliveries/status/:
+    get:
+      operationId: accounts_deliveries_status_retrieve
+      description: Get today's delivery status for the current customer.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/deliveries/toggle/{id}/:
+    post:
+      operationId: accounts_deliveries_toggle_create
+      description: Toggle the delivery status for a specific customer today.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/deliveries/update/{id}/:
+    patch:
+      operationId: accounts_deliveries_update_partial_update
+      description: Driver manually updates delivery quantity for a customer today.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/invitations/:
+    get:
+      operationId: accounts_invitations_list
+      description: List all invitations sent by the owner.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+          description: ''
+    post:
+      operationId: accounts_invitations_create
+      description: Invite a new Driver or Customer.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+  /api/accounts/invitations/signup/:
+    post:
+      operationId: accounts_invitations_signup_create
+      description: Register a new user using an invitation token.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationSignup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InvitationSignup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InvitationSignup'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/invitations/validate/{token}/:
+    get:
+      operationId: accounts_invitations_validate_retrieve
+      description: Validate an invitation token.
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/login/:
+    post:
+      operationId: accounts_login_create
+      description: Login with username and password and receive JWT tokens.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/login/refresh/:
+    post:
+      operationId: accounts_login_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/accounts/password-reset/:
+    post:
+      operationId: accounts_password_reset_create
+      description: Request a password reset. Returns UID and Token (Simulating email).
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/password-reset-confirm/:
+    post:
+      operationId: accounts_password_reset_confirm_create
+      description: Confirm password reset using UID, Token, and new password.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/payments/confirm/{id}/:
+    post:
+      operationId: accounts_payments_confirm_create
+      description: Owner confirms or rejects a payment.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/accounts/payments/list/:
+    get:
+      operationId: accounts_payments_list_list
+      description: List payments. Owners see pending payments from their customers.
+        Customers see their own history.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/accounts/payments/report/:
+    post:
+      operationId: accounts_payments_report_create
+      description: Customer reports a payment.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/accounts/prices/update/:
+    post:
+      operationId: accounts_prices_update_create
+      description: Update milk prices for the owner.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/profile/:
+    get:
+      operationId: accounts_profile_retrieve
+      description: Get current user profile data.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/reports/:
+    get:
+      operationId: accounts_reports_retrieve
+      description: Get an analytical report for the owner including total milk, revenue
+        and chart data.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/routes/:
+    get:
+      operationId: accounts_routes_retrieve
+      description: List or create delivery routes (Owner only).
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+    post:
+      operationId: accounts_routes_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/routes/{id}/:
+    get:
+      operationId: accounts_routes_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: accounts_routes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: accounts_routes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/routes/{id}/reorder/:
+    post:
+      operationId: accounts_routes_reorder_create
+      description: Reorder customers within a route.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          ordered_ids:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/accounts/signup/:
+    post:
+      operationId: accounts_signup_create
+      description: Register a new user (Owner/Driver/Customer).
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Signup'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/staff/:
+    get:
+      operationId: accounts_staff_list
+      description: List all Drivers or Customers linked to the Owner.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+    post:
+      operationId: accounts_staff_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/staff/{id}/:
+    get:
+      operationId: accounts_staff_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_staff_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: accounts_staff_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/stats/:
+    get:
+      operationId: accounts_stats_retrieve
+      description: Get summary stats for the owner's dashboard.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/alerts/:
+    get:
+      operationId: alerts_retrieve
+      description: Get overdue customers and today's paused deliveries for owner.
+      tags:
+      - alerts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/core/complaints/:
+    get:
+      operationId: core_complaints_list
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Complaint'
+          description: ''
+    post:
+      operationId: core_complaints_create
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+          description: ''
+  /api/core/complaints/{id}/:
+    get:
+      operationId: core_complaints_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+          description: ''
+    put:
+      operationId: core_complaints_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Complaint'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+          description: ''
+    patch:
+      operationId: core_complaints_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedComplaint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedComplaint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedComplaint'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+          description: ''
+    delete:
+      operationId: core_complaints_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/core/customers/:
+    get:
+      operationId: core_customers_list
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+          description: ''
+    post:
+      operationId: core_customers_create
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/core/customers/{id}/:
+    get:
+      operationId: core_customers_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    put:
+      operationId: core_customers_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    patch:
+      operationId: core_customers_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    delete:
+      operationId: core_customers_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/customers/{id}/profile/:
+    get:
+      operationId: core_customers_profile_retrieve
+      description: Get detailed profile of a customer.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/core/routes/:
+    get:
+      operationId: core_routes_list
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+          description: ''
+    post:
+      operationId: core_routes_create
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Route'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Route'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Route'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+  /api/core/routes/{id}/:
+    get:
+      operationId: core_routes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this route.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+    put:
+      operationId: core_routes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this route.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Route'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Route'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Route'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+    patch:
+      operationId: core_routes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this route.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoute'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoute'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoute'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+    delete:
+      operationId: core_routes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this route.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/routes/{id}/assign-driver/:
+    patch:
+      operationId: core_routes_assign_driver_partial_update
+      description: Assign a driver to a route.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this route.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssignDriver'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssignDriver'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssignDriver'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+          description: ''
+  /api/reports/:
+    get:
+      operationId: reports_retrieve
+      description: Get an analytical report for the owner including total milk, revenue
+        and chart data.
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/stats/:
+    get:
+      operationId: stats_retrieve
+      description: Get summary stats for the owner's dashboard.
+      tags:
+      - stats
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+components:
+  schemas:
+    AdjustmentTypeEnum:
+      enum:
+      - pause
+      - quantity
+      - complaint
+      type: string
+      description: |-
+        * `pause` - Pause Delivery
+        * `quantity` - Change Quantity
+        * `complaint` - Complaint
+    BlankEnum:
+      enum:
+      - ''
+    Complaint:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_resolved:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - id
+      - subject
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+        full_name:
+          type: string
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 15
+        route:
+          type: integer
+        route_name:
+          type: string
+          readOnly: true
+        milk_type:
+          $ref: '#/components/schemas/CustomerMilkTypeEnum'
+        daily_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          description: Quantity in liters
+        rate_per_liter:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        status:
+          $ref: '#/components/schemas/CustomerStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - daily_qty
+      - full_name
+      - id
+      - phone_number
+      - rate_per_liter
+      - route
+      - route_name
+    CustomerMilkTypeEnum:
+      enum:
+      - buffalo
+      - cow
+      type: string
+      description: |-
+        * `buffalo` - Buffalo
+        * `cow` - Cow
+    CustomerStatusEnum:
+      enum:
+      - active
+      - paused
+      type: string
+      description: |-
+        * `active` - Active
+        * `paused` - Paused
+    Delivery:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+        customer_name:
+          type: string
+          readOnly: true
+        customer_username:
+          type: string
+          readOnly: true
+        customer_house_no:
+          type: string
+          readOnly: true
+        customer_street:
+          type: string
+          readOnly: true
+        customer_area:
+          type: string
+          readOnly: true
+        customer_city:
+          type: string
+          readOnly: true
+        customer_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          readOnly: true
+        customer_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          readOnly: true
+        customer_milk_type:
+          type: string
+          readOnly: true
+        customer_quantity:
+          type: string
+          readOnly: true
+        route:
+          type: integer
+          nullable: true
+        date:
+          type: string
+          format: date
+        is_delivered:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/DeliveryStatusEnum'
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        price_at_delivery:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - customer
+      - customer_area
+      - customer_city
+      - customer_house_no
+      - customer_latitude
+      - customer_longitude
+      - customer_milk_type
+      - customer_name
+      - customer_quantity
+      - customer_street
+      - customer_username
+      - date
+      - delivered_at
+      - id
+      - total_amount
+    DeliveryAdjustment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        customer_name:
+          type: string
+          readOnly: true
+        customer_username:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        adjustment_type:
+          $ref: '#/components/schemas/AdjustmentTypeEnum'
+        new_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        message:
+          type: string
+          nullable: true
+          description: Message for the driver
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DeliveryAdjustmentStatusEnum'
+          readOnly: true
+        driver_comment:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - adjustment_type
+      - created_at
+      - customer
+      - customer_name
+      - customer_username
+      - date
+      - driver_comment
+      - id
+      - status
+      - updated_at
+    DeliveryAdjustmentStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `rejected` - Rejected
+    DeliveryStatusEnum:
+      enum:
+      - pending
+      - delivered
+      - cancelled
+      - paused
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `delivered` - Delivered
+        * `cancelled` - Cancelled
+        * `paused` - Paused
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/InvitationRoleEnum'
+        token:
+          type: string
+          readOnly: true
+          nullable: true
+        is_used:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - expires_at
+      - id
+      - is_used
+      - role
+      - token
+    InvitationRoleEnum:
+      enum:
+      - driver
+      - customer
+      type: string
+      description: |-
+        * `driver` - Driver
+        * `customer` - Customer
+    InvitationSignup:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+        full_name:
+          type: string
+          writeOnly: true
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 15
+        license_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        milk_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MilkType666Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        daily_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        house_no:
+          type: string
+          nullable: true
+          maxLength: 50
+        street:
+          type: string
+          nullable: true
+          maxLength: 100
+        area:
+          type: string
+          nullable: true
+          maxLength: 100
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+      required:
+      - email
+      - full_name
+      - password
+      - phone_number
+      - token
+    Login:
+      type: object
+      properties:
+        phone_number:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - phone_number
+    MilkType666Enum:
+      enum:
+      - cow
+      - buffalo
+      - both
+      type: string
+      description: |-
+        * `cow` - Cow
+        * `buffalo` - Buffalo
+        * `both` - Both
+    NullEnum:
+      enum:
+      - null
+    PasswordResetConfirm:
+      type: object
+      properties:
+        uid:
+          type: string
+        token:
+          type: string
+        new_password:
+          type: string
+          writeOnly: true
+      required:
+      - new_password
+      - token
+      - uid
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    PatchedAssignDriver:
+      type: object
+      properties:
+        driver_id:
+          type: integer
+    PatchedComplaint:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_resolved:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+        full_name:
+          type: string
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 15
+        route:
+          type: integer
+        route_name:
+          type: string
+          readOnly: true
+        milk_type:
+          $ref: '#/components/schemas/CustomerMilkTypeEnum'
+        daily_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          description: Quantity in liters
+        rate_per_liter:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+        status:
+          $ref: '#/components/schemas/CustomerStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedDelivery:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+        customer_name:
+          type: string
+          readOnly: true
+        customer_username:
+          type: string
+          readOnly: true
+        customer_house_no:
+          type: string
+          readOnly: true
+        customer_street:
+          type: string
+          readOnly: true
+        customer_area:
+          type: string
+          readOnly: true
+        customer_city:
+          type: string
+          readOnly: true
+        customer_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          readOnly: true
+        customer_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          readOnly: true
+        customer_milk_type:
+          type: string
+          readOnly: true
+        customer_quantity:
+          type: string
+          readOnly: true
+        route:
+          type: integer
+          nullable: true
+        date:
+          type: string
+          format: date
+        is_delivered:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/DeliveryStatusEnum'
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        price_at_delivery:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+    PatchedRoute:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        driver:
+          type: integer
+          nullable: true
+        driver_details:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+        customer_name:
+          type: string
+          readOnly: true
+        customer_username:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        method:
+          type: string
+          maxLength: 50
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          nullable: true
+        received_by_name:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - confirmed_at
+      - created_at
+      - customer
+      - customer_name
+      - customer_username
+      - id
+      - received_by_name
+      - status
+    PaymentStatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `rejected` - Rejected
+    RoleD7aEnum:
+      enum:
+      - owner
+      - driver
+      - customer
+      type: string
+      description: |-
+        * `owner` - Owner
+        * `driver` - Driver
+        * `customer` - Customer
+    Route:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        driver:
+          type: integer
+          nullable: true
+          description: Assigned Driver for this route
+        driver_name:
+          type: string
+          readOnly: true
+        customer_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        assigned_customer_ids:
+          type: string
+          readOnly: true
+        customer_count:
+          type: string
+          readOnly: true
+        customer_details:
+          type: string
+          readOnly: true
+        total_quantity:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_customer_ids
+      - created_at
+      - customer_count
+      - customer_details
+      - driver_name
+      - id
+      - name
+      - total_quantity
+    Signup:
+      type: object
+      properties:
+        password:
+          type: string
+          writeOnly: true
+        full_name:
+          type: string
+          writeOnly: true
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 15
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/RoleD7aEnum'
+        house_no:
+          type: string
+          nullable: true
+          maxLength: 50
+        street:
+          type: string
+          nullable: true
+          maxLength: 100
+        area:
+          type: string
+          nullable: true
+          maxLength: 100
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+        dairy_name:
+          type: string
+          nullable: true
+          description: For Owner users
+          pattern: ^[a-zA-Z\s]+$
+          maxLength: 100
+        cow_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        buffalo_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - buffalo_price
+      - cow_price
+      - email
+      - full_name
+      - password
+      - phone_number
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/RoleD7aEnum'
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 15
+        first_name:
+          type: string
+          maxLength: 150
+        license_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        milk_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MilkType666Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        daily_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        house_no:
+          type: string
+          nullable: true
+          maxLength: 50
+        street:
+          type: string
+          nullable: true
+          maxLength: 100
+        area:
+          type: string
+          nullable: true
+          maxLength: 100
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,16})?$
+          nullable: true
+        dairy_name:
+          type: string
+          nullable: true
+          description: For Owner users
+          pattern: ^[a-zA-Z\s]+$
+          maxLength: 100
+        owner_dairy_name:
+          type: string
+          readOnly: true
+        route:
+          type: integer
+          nullable: true
+        route_name:
+          type: string
+          readOnly: true
+        buffalo_price:
+          type: string
+          readOnly: true
+        cow_price:
+          type: string
+          readOnly: true
+        outstanding_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date_joined:
+          type: string
+          format: date-time
+        sequence_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - buffalo_price
+      - cow_price
+      - id
+      - owner_dairy_name
+      - route_name
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,207 +1,381 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Modal,
     Pressable,
     ScrollView,
     StyleSheet,
     TextInput,
     View,
+    FlatList,
+    SafeAreaView,
+    TouchableOpacity,
+    RefreshControl
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-const routesData = [
-  {
-    id: "1",
-    name: "Route A — Johar Town",
-    driver: "ALI",
-    stops: 58,
-    status: "Active",
-    subRoutes: [
-      { id: "s1", time: "5:00 AM", location: "Block C, D, E", customers: 18 },
-      { id: "s2", time: "6:00 AM", location: "Block F, G", customers: 12 },
-      { id: "s3", time: "7:00 AM", location: "Canal Road", customers: 8 },
-    ],
-  },
-  {
-    id: "2",
-    name: "Route B — Garden Town",
-    driver: "RAZA",
-    stops: 36,
-    status: "Active",
-    subRoutes: [
-      { id: "s4", time: "5:30 AM", location: "Main Boulevard", customers: 22 },
-      { id: "s5", time: "7:00 AM", location: "Side Streets", customers: 14 },
-    ],
-  },
-];
-
-const initialSequence = [
-  { id: "c1", name: "Waleed Hassan", address: "House 45, Block C", order: "01" },
-  { id: "c2", name: "Fatima Ape", address: "House 78, Block D", order: "02" },
-  { id: "c3", name: "Uncle Tariq", address: "Shop 12, Block E", order: "03" },
-];
+import * as SecureStore from 'expo-secure-store';
+import { useRouter } from "expo-router";
+import { ENDPOINTS } from "../../constants/Api";
 
 export default function RoutesScreen() {
-  const [sequenceVisible, setSequenceVisible] = useState(false);
-  const [selectedSubRoute, setSelectedSubRoute] = useState<any>(null);
+  const router = useRouter();
+  const [routesData, setRoutesData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Modals Visibility
+  const [addRouteVisible, setAddRouteVisible] = useState(false);
+  const [driverPickerVisible, setDriverPickerVisible] = useState(false);
 
-  const openSequence = (sub: any) => {
-    setSelectedSubRoute(sub);
-    setSequenceVisible(true);
+  // New Route Form State
+  const [newRouteName, setNewRouteName] = useState("");
+  const [selectedDriver, setSelectedDriver] = useState<any>(null);
+  const [availableDrivers, setAvailableDrivers] = useState<any[]>([]);
+  const [availableCustomers, setAvailableCustomers] = useState<any[]>([]);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState<"select" | "sequence">("select");
+  
+  // Edit Route State
+  const [editingRouteId, setEditingRouteId] = useState<number | null>(null);
+
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRoutes();
+      fetchDrivers();
+      fetchAvailableCustomers();
+    }, [])
+  );
+
+  const fetchRoutes = async () => {
+    setIsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const response = await fetch(ENDPOINTS.ROUTES as string, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      console.log("DEBUG: Routes Response Data:", JSON.stringify(data));
+      if (response.ok) {
+        setRoutesData(Array.isArray(data) ? data : (data.results || []));
+      }
+
+    } catch (e) {
+      console.error("Fetch Routes Error:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const response = await fetch(ENDPOINTS.DRIVERS as string, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await response.json();
+      const driversList = (Array.isArray(data) ? data : (data.results || []))
+        .filter((u: any) => u.role === "driver");
+      setAvailableDrivers(driversList);
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchAvailableCustomers = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const response = await fetch(ENDPOINTS.CUSTOMERS_LIST as string, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setAvailableCustomers(Array.isArray(data) ? data : (data.results || []));
+    } catch (e) { console.error(e); }
+  };
+
+  const toggleCustomer = (id: number) => {
+    setSelectedCustomerIds(prev => 
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleCreateOrUpdateRoute = async () => {
+    if (!newRouteName) {
+      Alert.alert("Error", "Route name is required.");
+      return;
+    }
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const payload = {
+        name: newRouteName,
+        driver: selectedDriver?.id || null,
+        customer_ids: selectedCustomerIds
+      };
+
+      const url = editingRouteId 
+        ? `${ENDPOINTS.ROUTES}${editingRouteId}/`
+        : ENDPOINTS.ROUTES as string;
+      const method = editingRouteId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        Alert.alert("Success", `Route ${editingRouteId ? "updated" : "created"} successfully!`);
+        setAddRouteVisible(false);
+        resetForm();
+        fetchRoutes();
+      } else {
+        const errText = await response.text();
+        console.log(`DEBUG EDIT ROUTE - Status ${response.status}:`, errText);
+        try {
+          const err = JSON.parse(errText);
+          Alert.alert("Error Response", JSON.stringify(err));
+        } catch (e) {
+          Alert.alert("Server Error", `Status Code: ${response.status}`);
+        }
+      }
+    } catch (e: any) { 
+      Alert.alert("App/Network Error", e.message || "Could not connect to server."); 
+    }
+  };
+
+  const openAddRoute = () => {
+    resetForm();
+    setAddRouteVisible(true);
+  };
+
+  const openEditRoute = (route: any) => {
+    setEditingRouteId(route.id);
+    setNewRouteName(route.name || "");
+    const driverRaw = availableDrivers.find(d => d.full_name === route.driver_name || d.first_name === route.driver_name);
+    setSelectedDriver(driverRaw || (route.driver ? { id: route.driver, full_name: route.driver_name } : null));
+    
+    // Parse assigned_customer_ids if it's a string, or map if it's an array
+    if (typeof route.assigned_customer_ids === 'string') {
+        const ids = route.assigned_customer_ids.split(',').map((id:string) => parseInt(id.trim())).filter((id:number) => !isNaN(id));
+        setSelectedCustomerIds(ids);
+    } else if (Array.isArray(route.assigned_customer_ids)) {
+        setSelectedCustomerIds(route.assigned_customer_ids.map((id:any) => parseInt(id)));
+    } else {
+        setSelectedCustomerIds([]);
+    }
+
+    setAddRouteVisible(true);
+  };
+
+  const resetForm = () => {
+    setEditingRouteId(null);
+    setNewRouteName("");
+    setSelectedDriver(null);
+    setSelectedCustomerIds([]);
+    setActiveTab("select");
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        style={styles.container}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <ScrollView 
+        style={styles.container} 
         contentContainerStyle={styles.containerContent}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={fetchRoutes} />
+        }
       >
+
+        {/* Header Consistent with Customers.tsx */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            <ThemedText style={styles.headerTitle}>Routes</ThemedText>
+            <ThemedText style={styles.title}>Routes</ThemedText>
           </View>
-          <Pressable style={styles.addRouteButton}>
-            <ThemedText style={styles.addRouteText}>+ Route</ThemedText>
-          </Pressable>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={openAddRoute}
+          >
+            <Ionicons name="add" size={24} color="#FFF" />
+          </TouchableOpacity>
         </View>
 
-        <ThemedText style={styles.urduTitle}>ڈلیوری کے راستے</ThemedText>
-
-        {routesData.map((route) => (
-          <ThemedView key={route.id} style={styles.routeCard}>
-            <View style={styles.routeHeader}>
-              <View>
-                <ThemedText style={styles.routeName}>{route.name}</ThemedText>
-                <ThemedText style={styles.routeMeta}>
-                  DRIVER: {route.driver} • {route.stops} STOPS
-                </ThemedText>
-              </View>
-              <View style={styles.routeHeaderRight}>
-                <ThemedText style={styles.activeTag}>{route.status}</ThemedText>
-                <Pressable style={styles.editButton}>
-                  <ThemedText style={styles.editButtonText}>Edit</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-
-            <View style={styles.subRoutesContainer}>
-              {route.subRoutes.map((sub, index) => (
-                <Pressable 
-                  key={index} 
-                  style={styles.subRouteRow}
-                  onPress={() => openSequence({ ...sub, routeName: route.name })}
-                >
-                  <View style={styles.timeTag}>
-                    <ThemedText style={styles.timeText}>{sub.time}</ThemedText>
-                  </View>
-                  <ThemedText style={styles.locationText}>{sub.location}</ThemedText>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <ThemedText style={styles.customerCount}>
-                      {sub.customers}
-                    </ThemedText>
-                    <Ionicons name="chevron-forward" size={14} color="#9ca3af" />
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-
-            <View style={styles.routeActions}>
-              <Pressable style={styles.actionButton}>
-                <ThemedText style={styles.actionButtonText}>+ Sub-route</ThemedText>
-              </Pressable>
-              <Pressable style={styles.actionButton}>
-                <ThemedText style={styles.actionButtonText}>View map</ThemedText>
-              </Pressable>
-            </View>
+        {/* Quick Stats consistent with other pages */}
+        <ThemedView style={styles.quickStats}>
+          <ThemedView style={styles.statBox}>
+            <ThemedText style={styles.statNumber}>{routesData.length}</ThemedText>
+            <ThemedText style={styles.statLabel}>Total Routes</ThemedText>
           </ThemedView>
-        ))}
-
-        <ThemedView style={styles.warningCard}>
-          <View style={styles.warningHeader}>
-            <Ionicons name="warning" size={20} color="#b45309" />
-            <ThemedText style={styles.warningTitle}>
-              Route C has no driver assigned
+          <ThemedView style={styles.statBox}>
+            <ThemedText style={styles.statNumber}>
+              {routesData.filter(r => !r.driver_name).length}
             </ThemedText>
-          </View>
-          <ThemedText style={styles.urduWarning}>
-            کوئی ڈرائیور نہیں ہے
-          </ThemedText>
+            <ThemedText style={styles.statLabel}>Unassigned</ThemedText>
+          </ThemedView>
+        </ThemedView>
+
+        {/* Routes List */}
+        <ThemedView style={styles.listCard}>
+          <ThemedText style={styles.sectionHeader}>Active Delivery Plans</ThemedText>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#111827" style={{ marginVertical: 40 }} />
+          ) : routesData.length > 0 ? (
+            routesData.map((route) => (
+              <ThemedView key={route.id} style={styles.routeCard}>
+                <View style={styles.routeTop}>
+                  <View style={[styles.statusDot, route.driver_name ? styles.dotAssigned : styles.dotUnassigned]} />
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="defaultSemiBold" style={styles.routeNameText}>{route.name}</ThemedText>
+                    <ThemedText style={styles.routeMetaText}>
+                      Driver: {route.driver_name || "NOT ASSIGNED"}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity onPress={() => openEditRoute(route)} style={styles.editBtn}>
+                    <Ionicons name="create-outline" size={20} color="#3b82f6" />
+                    <ThemedText style={{ color: "#3b82f6", fontWeight: "700", marginLeft: 4 }}>Edit</ThemedText>
+                  </TouchableOpacity>
+                </View>
+
+                {route.customer_details ? (
+                  <View style={{ marginBottom: 12, backgroundColor: "#f8fafc", padding: 10, borderRadius: 10 }}>
+                    <ThemedText style={{ fontSize: 13, color: "#475569", fontWeight: "600", lineHeight: 20 }}>
+                      <Ionicons name="people" size={12} color="#475569" /> Customers: {Array.isArray(route.customer_details) ? route.customer_details.map((c: any) => typeof c === 'object' ? (c.first_name || c.name || c.username || c.full_name || '') : c).join(", ") : String(route.customer_details || "")}
+                    </ThemedText>
+                  </View>
+                ) : null}
+
+                <View style={styles.routeFooter}>
+                   <View style={styles.footerStat}>
+                      <Ionicons name="people-outline" size={14} color="#6b7280" />
+                      <ThemedText style={styles.footerStatText}>{route.customer_count || 0} Customers</ThemedText>
+                   </View>
+                   <View style={styles.footerStat}>
+                      <Ionicons name="water-outline" size={14} color="#6b7280" />
+                      <ThemedText style={styles.footerStatText}>{route.total_quantity || 0}L Milk</ThemedText>
+                   </View>
+                </View>
+              </ThemedView>
+
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="map-outline" size={48} color="#d1d5db" />
+              <ThemedText style={styles.emptyText}>No routes found</ThemedText>
+            </View>
+          )}
         </ThemedView>
       </ScrollView>
 
-      {/* Sequence Modal */}
-      <Modal
-        visible={sequenceVisible}
-        animationType="slide"
-        transparent={false}
-      >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      {/* Add Route Modal - Redesigned for Consistency */}
+      <Modal visible={addRouteVisible} animationType="slide">
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
           <View style={styles.modalHeader}>
-            <Pressable onPress={() => setSequenceVisible(false)}>
+            <Pressable onPress={() => setAddRouteVisible(false)}>
               <Ionicons name="close" size={28} color="#111827" />
             </Pressable>
-            <ThemedText style={styles.modalTitle}>Customer Sequence</ThemedText>
+            <ThemedText style={styles.modalTitle}>New Delivery Route</ThemedText>
             <View style={{ width: 28 }} />
           </View>
 
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <View style={styles.sequenceInfo}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <ThemedText style={styles.sequenceRouteName}>
-                  {selectedSubRoute?.routeName?.split("—")[0]} → Sub-route 1
-                </ThemedText>
-                <ThemedText style={styles.sequenceTag}>R2-S1</ThemedText>
+          <ScrollView contentContainerStyle={styles.modalBody}>
+            <View style={styles.inputGroup}>
+              <View style={styles.labelRow}>
+                <ThemedText style={styles.inputLabel}>Route Identity</ThemedText>
+                <ThemedText style={styles.urduLabel}>راستہ کا نام</ThemedText>
               </View>
-              <ThemedText style={styles.sequenceLocation}>
-                {selectedSubRoute?.location?.toUpperCase()} • {selectedSubRoute?.time} • {selectedSubRoute?.customers} STOPS
-              </ThemedText>
-            </View>
-
-            <View style={styles.dragInfo}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="swap-vertical" size={20} color="#2563eb" />
-                <ThemedText style={styles.dragText}>Drag to reorder delivery sequence</ThemedText>
-              </View>
-              <ThemedText style={styles.urduDragText}>ترتیب بدلنے کے لیے کھینچیں</ThemedText>
-            </View>
-
-            <ThemedText style={styles.sectionTitle}>DELIVERY ORDER</ThemedText>
-            {initialSequence.map((item) => (
-              <View key={item.id} style={styles.sequenceItem}>
-                <ThemedText style={styles.sequenceNumber}>{item.order}</ThemedText>
-                <View style={{ flex: 1, marginLeft: 16 }}>
-                  <ThemedText style={styles.customerName}>{item.name}</ThemedText>
-                  <ThemedText style={styles.customerAddress}>{item.address}</ThemedText>
-                </View>
-                <Ionicons name="grid" size={20} color="#d1d5db" />
-              </View>
-            ))}
-
-            <View style={styles.addItemRow}>
               <TextInput
-                placeholder="Add customer to sub-route"
-                placeholderTextColor="#9ca3af"
-                style={styles.addInput}
+                value={newRouteName}
+                onChangeText={setNewRouteName}
+                placeholder="e.g. Phase 5, Morning"
+                style={styles.modalInput}
               />
-              <Pressable style={styles.addButtonMini}>
-                <ThemedText style={styles.addButtonMiniText}>Add</ThemedText>
-              </Pressable>
             </View>
 
-            <Pressable style={styles.saveOrderButton} onPress={() => setSequenceVisible(false)}>
-              <ThemedText style={styles.saveOrderText}>Save order ✓</ThemedText>
-            </Pressable>
+            <View style={styles.inputGroup}>
+              <View style={styles.labelRow}>
+                <ThemedText style={styles.inputLabel}>Assign Driver</ThemedText>
+                <ThemedText style={styles.urduLabel}>ڈرائیور منتخب کریں</ThemedText>
+              </View>
+              <TouchableOpacity 
+                style={styles.dropdownSelector}
+                onPress={() => setDriverPickerVisible(true)}
+              >
+                <ThemedText style={styles.dropdownValue}>
+                  {selectedDriver ? (selectedDriver.first_name || selectedDriver.full_name || selectedDriver.username || "Driver ID " + selectedDriver.id) : "Choose a driver..."}
+                </ThemedText>
+                <Ionicons name="chevron-down" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.customerSection}>
+               <View style={styles.labelRow}>
+                  <ThemedText style={styles.inputLabel}>Select Customers</ThemedText>
+                  <ThemedText style={styles.urduLabel}>گاہک منتخب کریں</ThemedText>
+               </View>
+               <View style={styles.customerListContainer}>
+                  {availableCustomers.map(c => (
+                    <Pressable 
+                      key={c.id} 
+                      style={[styles.customerSelectBtn, selectedCustomerIds.includes(c.id) && styles.customerSelectBtnActive]}
+                      onPress={() => toggleCustomer(c.id)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={[styles.custName, selectedCustomerIds.includes(c.id) && styles.custNameActive]}>{c.first_name || c.full_name || c.username}</ThemedText>
+                        <ThemedText style={styles.custSub}>
+                           {c.house_no ? `${c.house_no}, ` : ''}{c.street ? `${c.street}, ` : ''}{c.area || c.city || c.phone_number} • {c.route_name || 'No current route'}
+                        </ThemedText>
+                      </View>
+                      {selectedCustomerIds.includes(c.id) && (
+                        <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                      )}
+                    </Pressable>
+                  ))}
+               </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+               <TouchableOpacity 
+                style={styles.confirmButton}
+                onPress={handleCreateOrUpdateRoute}
+               >
+                  <ThemedText style={styles.confirmButtonText}>{editingRouteId ? "Save Changes" : "Confirm & Create"}</ThemedText>
+               </TouchableOpacity>
+
+               <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setAddRouteVisible(false)}
+               >
+                  <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+               </TouchableOpacity>
+            </View>
           </ScrollView>
         </SafeAreaView>
+
       </Modal>
-    </View>
+
+      {/* Picker Modal */}
+      <Modal visible={driverPickerVisible} transparent animationType="fade">
+        <View style={styles.pickerOverlay}>
+          <ThemedView style={styles.pickerContent}>
+            <ThemedText style={styles.pickerTitle}>Select available driver</ThemedText>
+            {availableDrivers.map((d: any) => (
+              <Pressable key={d.id} style={styles.pickerItem} onPress={() => { setSelectedDriver(d); setDriverPickerVisible(false); }}>
+                <ThemedText style={styles.pickerItemText}>{d.first_name || d.full_name || d.username}</ThemedText>
+                <ThemedText style={styles.pickerItemPhone}>{d.phone_number || "Driver"}</ThemedText>
+              </Pressable>
+            ))}
+            <Pressable style={styles.pickerClose} onPress={() => setDriverPickerVisible(false)}>
+              <ThemedText style={styles.pickerCloseText}>Cancel</ThemedText>
+            </Pressable>
+          </ThemedView>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
   );
 }
-
-// Separate helper for SafeView in dynamic context if needed
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const styles = StyleSheet.create({
   container: {
@@ -210,300 +384,280 @@ const styles = StyleSheet.create({
   },
   containerContent: {
     padding: 16,
-    paddingTop: 16,
     paddingBottom: 40,
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    marginBottom: 8,
+    marginBottom: 16,
+    backgroundColor: "#ffffff",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
-  headerTitle: {
+  title: {
     fontSize: 22,
     fontWeight: "700",
     color: "#111827",
   },
-  addRouteButton: {
+  addButton: {
     backgroundColor: "#111827",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    padding: 8,
     borderRadius: 8,
   },
-  addRouteText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  urduTitle: {
-    fontSize: 18,
-    color: "#6b7280",
-    marginBottom: 16,
-    marginLeft: 40,
-  },
-  routeCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  routeHeader: {
+  quickStats: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20,
+    backgroundColor: "#ffffff",
   },
-  routeName: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  routeMeta: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  routeHeaderRight: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  activeTag: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#059669",
-    backgroundColor: "#ecfdf5",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  editButton: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  editButtonText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  subRoutesContainer: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#f3f4f6",
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  subRouteRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  timeTag: {
-    backgroundColor: "#1d4ed8",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    width: 65,
-    alignItems: "center",
-  },
-  timeText: {
-    color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  locationText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
-    marginLeft: 12,
-  },
-  customerCount: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginRight: 4,
-  },
-  routeActions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  actionButton: {
-    backgroundColor: "#f9fafb",
+  statBox: {
+    width: "48%",
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
   },
-  actionButtonText: {
-    fontSize: 13,
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  statLabel: {
+    color: "#6b7280",
+    marginTop: 2,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#374151",
   },
-  warningCard: {
-    backgroundColor: "#fffbeb",
-    borderWidth: 1,
-    borderColor: "#fef3c7",
+  listCard: {
+    backgroundColor: "#ffffff",
     borderRadius: 14,
-    padding: 16,
-    marginTop: 10,
+    padding: 2,
   },
-  warningHeader: {
+  sectionHeader: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: 12,
+  },
+  routeCard: {
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    backgroundColor: "#ffffff",
+  },
+  routeTop: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
+    marginBottom: 12,
   },
-  warningTitle: {
-    fontSize: 14,
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dotAssigned: {
+    backgroundColor: "#10b981",
+  },
+  dotUnassigned: {
+    backgroundColor: "#f59e0b",
+  },
+  routeNameText: {
+    fontSize: 16,
     fontWeight: "700",
-    color: "#b45309",
+    color: "#111827",
   },
-  urduWarning: {
-    fontSize: 14,
-    color: "#b45309",
-    marginTop: 4,
-    marginLeft: 28,
+  routeMetaText: { fontSize: 13, color: "#9ca3af", marginTop: 4, fontWeight: "600" },
+  editBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "#eff6ff", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  routeFooter: {
+    flexDirection: "row",
+    gap: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+    paddingTop: 12,
   },
-  // Modal Styles
+  footerStat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  footerStatText: {
+    fontSize: 12,
+    color: "#4b5563",
+    fontWeight: "600",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    color: "#9ca3af",
+    marginTop: 8,
+  },
+  
+  // Modal Consistency
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: "#f3f4f6",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "700",
   },
-  modalContent: {
+  modalBody: {
     padding: 16,
   },
-  sequenceInfo: {
+  inputGroup: {
     marginBottom: 20,
   },
-  sequenceRouteName: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#111827",
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
-  sequenceTag: {
-    fontSize: 10,
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    color: "#6b7280",
+  inputLabel: {
+    fontSize: 14,
     fontWeight: "700",
+    color: "#374151",
   },
-  sequenceLocation: {
+  urduLabel: {
     fontSize: 12,
-    color: "#6b7280",
-    fontWeight: "600",
+    color: "#9ca3af",
+  },
+  modalInput: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+  },
+  dropdownSelector: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dropdownValue: {
+    color: "#111827",
+    fontSize: 15,
+  },
+  customerSection: {
+    marginBottom: 24,
+  },
+  customerListContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
     marginTop: 4,
   },
-  dragInfo: {
-    backgroundColor: "#eff6ff",
-    borderWidth: 1,
-    borderColor: "#bfdbfe",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-  },
-  dragText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#2563eb",
-  },
-  urduDragText: {
-    fontSize: 13,
-    color: "#2563eb",
-    marginTop: 2,
-    marginLeft: 28,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#9ca3af",
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  sequenceItem: {
+  customerSelectBtn: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  customerSelectBtnActive: {
+    borderColor: "#10b981",
+    backgroundColor: "#ecfdf5",
+  },
+  custName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  custNameActive: {
+    color: "#065f46",
+  },
+  custSub: {
+    fontSize: 11,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+  modalFooter: {
+    gap: 12,
+    marginTop: 10,
+    paddingBottom: 40,
+  },
+  confirmButton: {
+    backgroundColor: "#111827",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  cancelButton: {
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  cancelButtonText: {
+    color: "#4b5563",
+    fontWeight: "600",
+  },
+  
+  // Picker
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  pickerContent: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 20,
+    width: "100%",
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  pickerItem: {
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
-  sequenceNumber: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#2563eb",
-    backgroundColor: "#eff6ff",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    textAlign: "center",
-    lineHeight: 30,
-    overflow: "hidden",
-  },
-  customerName: {
-    fontSize: 15,
-    fontWeight: "700",
+  pickerItemText: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#111827",
   },
-  customerAddress: {
+  pickerItemPhone: {
     fontSize: 12,
     color: "#6b7280",
     marginTop: 2,
   },
-  addItemRow: {
-    flexDirection: "row",
+  pickerClose: {
     marginTop: 20,
-    gap: 10,
-  },
-  addInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-  },
-  addButtonMini: {
-    backgroundColor: "#2563eb",
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    borderRadius: 8,
-  },
-  addButtonMiniText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  saveOrderButton: {
-    backgroundColor: "#059669",
-    paddingVertical: 14,
+    backgroundColor: "#111827",
+    padding: 12,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 30,
   },
-  saveOrderText: {
-    color: "#fff",
-    fontSize: 16,
+  pickerCloseText: {
+    color: "#ffffff",
     fontWeight: "700",
-  },
+  }
 });

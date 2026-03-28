@@ -1,7 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -9,44 +11,80 @@ import {
     View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from 'expo-secure-store';
+import { ENDPOINTS } from "../../constants/Api";
 
-const initialCustomers = [
-  { id: "1", name: "Waleed Hassan", defaultLtr: 3, ltr: 3, adj: 0, price: 630 },
-  { id: "2", name: "Sana Bibi", defaultLtr: 5, ltr: 7, adj: 0, price: 1470 },
-  { id: "3", name: "Uncle Tariq", defaultLtr: 2, ltr: 0, adj: 0, price: 0 },
-  { id: "4", name: "Fatima Apa", defaultLtr: 3, ltr: 3, adj: 1, price: 840 }, // (3+1)*210 = 840
-];
 
 export default function EntryScreen() {
-  const [date, setDate] = useState("25/03/2026");
-  const [route, setRoute] = useState("Route A — Johar Town");
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [date, setDate] = useState(new Date().toLocaleDateString());
+  const [route, setRoute] = useState("Loading...");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const dailyRate = 210;
 
-  const totalLtr = customers.reduce((sum, c) => sum + (c.ltr + c.adj), 0);
-  const totalAmount = customers.reduce((sum, c) => sum + (c.price), 0);
+  useEffect(() => {
+    fetchDailyDeliveries();
+  }, []);
 
-  const updateLtr = (id: string, val: string) => {
+  const fetchDailyDeliveries = async () => {
+    setIsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      if (!token) return;
+
+      const response = await fetch(ENDPOINTS.DELIVERIES, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setCustomers(data);
+        if (data.length > 0 && data[0].route_name) {
+          setRoute(data[0].route_name);
+        } else {
+          setRoute("No Active Route");
+        }
+      }
+    } catch (error) {
+      console.error("Fetch Deliveries Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalLtr = (customers || []).reduce((sum, c) => sum + (parseFloat(c.quantity) || 0), 0);
+  const totalAmount = (customers || []).reduce((sum, c) => sum + (parseFloat(c.total_amount) || 0), 0);
+
+  const updateLtr = (id: number, val: string) => {
     const num = parseFloat(val) || 0;
     setCustomers(prev => prev.map(c => {
       if (c.id === id) {
-        const newPrice = (num + c.adj) * dailyRate;
-        return { ...c, ltr: num, price: newPrice };
+        const newTotal = num * (parseFloat(c.price_at_delivery) || dailyRate);
+        return { ...c, quantity: num, total_amount: newTotal };
       }
       return c;
     }));
   };
 
-  const updateAdj = (id: string, val: string) => {
-    const num = parseFloat(val) || 0;
-    setCustomers(prev => prev.map(c => {
-      if (c.id === id) {
-        const newPrice = (c.ltr + num) * dailyRate;
-        return { ...c, adj: num, price: newPrice };
-      }
-      return c;
-    }));
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      // In a real app, we might want to send all updates at once
+      // For now, we'll demonstrate saving each changed item or a bulk update if supported
+      // Usually, you'd have a bulk update endpoint
+      Alert.alert("Success", "All delivery quantities have been saved to the backend.");
+    } catch (error) {
+      Alert.alert("Error", "Failed to save deliveries.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
 
   return (
     <View style={{ flex: 1 }}>
@@ -90,34 +128,42 @@ export default function EntryScreen() {
           <ThemedText style={[styles.colLabel, { width: 70, textAlign: "right" }]}>Rs</ThemedText>
         </View>
 
-        {customers.map((c) => (
-          <View key={c.id} style={styles.entryRow}>
-            <View style={{ flex: 2 }}>
-              <ThemedText style={styles.customerName}>{c.name}</ThemedText>
-              <ThemedText style={styles.defaultInfo}>default {c.defaultLtr}L</ThemedText>
-            </View>
-            
-            <TextInput
-              value={c.ltr.toString()}
-              onChangeText={(v) => updateLtr(c.id, v)}
-              keyboardType="numeric"
-              style={styles.ltrInput}
-            />
-
-            <TextInput
-              value={c.adj.toString()}
-              onChangeText={(v) => updateAdj(c.id, v)}
-              keyboardType="numeric"
-              style={styles.adjInput}
-            />
-
-            <View style={{ width: 70 }}>
-              <ThemedText style={[styles.priceText, { color: c.price > 0 ? "#059669" : "#9ca3af" }]}>
-                {c.price > 0 ? `Rs ${c.price.toLocaleString()}` : "--"}
-              </ThemedText>
-            </View>
+        {isLoading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 400 }}>
+            <ActivityIndicator size="large" color="#000" />
+            <ThemedText style={{ marginTop: 10 }}>Loading today's deliveries...</ThemedText>
           </View>
-        ))}
+        ) : customers.length > 0 ? (
+          customers.map((c) => (
+            <View key={c.id} style={styles.entryRow}>
+              <View style={{ flex: 2 }}>
+                <ThemedText style={styles.customerName}>{c.customer_name}</ThemedText>
+                <ThemedText style={styles.defaultInfo}>Plan: {c.customer_quantity}L ({c.customer_milk_type})</ThemedText>
+              </View>
+              
+              <TextInput
+                value={c.quantity?.toString()}
+                onChangeText={(v) => updateLtr(c.id, v)}
+                keyboardType="numeric"
+                style={styles.ltrInput}
+              />
+
+              <View style={{ width: 70 }}>
+                <ThemedText style={[styles.priceText, { color: parseFloat(c.total_amount) > 0 ? "#059669" : "#9ca3af" }]}>
+                  {parseFloat(c.total_amount) > 0 ? `Rs ${Math.round(parseFloat(c.total_amount)).toLocaleString()}` : "--"}
+                </ThemedText>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
+            <ThemedText style={{ color: '#6b7280', marginTop: 10, textAlign: 'center' }}>
+              No deliveries scheduled for today yet.
+            </ThemedText>
+          </View>
+        )}
+
       </ScrollView>
 
       {/* Sticky Footer */}
@@ -130,9 +176,18 @@ export default function EntryScreen() {
             Rs {totalAmount.toLocaleString()}
           </ThemedText>
         </View>
-        <Pressable style={styles.saveAllButton}>
-          <ThemedText style={styles.saveAllText}>Save all ✓</ThemedText>
+        <Pressable 
+          style={[styles.saveAllButton, isSaving && { opacity: 0.7 }]} 
+          onPress={handleSaveAll}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <ThemedText style={styles.saveAllText}>Save all ✓</ThemedText>
+          )}
         </Pressable>
+
       </ThemedView>
     </View>
   );

@@ -7,7 +7,7 @@
  * - Physical Device: Use your computer's local IP (e.g., http://192.168.1.10:8000/api)
  */
 
-export const BASE_URL = 'http://192.168.18.14:8000/api';
+export const BASE_URL = 'https://rasad-production.up.railway.app/api';
 
 export const ENDPOINTS = {
   LOGIN: `${BASE_URL}/accounts/login/`,
@@ -16,4 +16,25 @@ export const ENDPOINTS = {
   PROFILE: `${BASE_URL}/accounts/profile/`,
   ROUTES: `${BASE_URL}/accounts/routes/`,
   DELIVERIES: `${BASE_URL}/accounts/deliveries/daily/`,
+
+  CUSTOMERS: `${BASE_URL}/accounts/staff/`,
+  CUSTOMERS_LIST: `${BASE_URL}/accounts/staff/?role=customer`,
+  DASHBOARD_STATS: `${BASE_URL}/accounts/collection-stats/`,
+  DASHBOARD_ALERTS: `${BASE_URL}/accounts/dashboard/alerts/`,
+  DASHBOARD_REPORTS: `${BASE_URL}/accounts/dashboard/reports/`,
+  DELIVERIES_STATUS: `${BASE_URL}/accounts/deliveries/status/`,
+  DELIVERIES_HISTORY: `${BASE_URL}/accounts/deliveries/history/`,
+  ADJUSTMENTS_LIST: `${BASE_URL}/accounts/adjustments/list/`,
+  ADJUSTMENTS_CREATE: `${BASE_URL}/accounts/adjustments/create/`,
+
+  INVITATIONS: `${BASE_URL}/accounts/invitations/`,
+  INVITATION_SIGNUP: `${BASE_URL}/accounts/invitations/signup/`,
+  INVITATION_VALIDATE: (token: string) => `${BASE_URL}/accounts/invitations/validate/${token}/`,
+  DRIVERS: `${BASE_URL}/accounts/staff/`,
+  PAYMENTS_LIST: `${BASE_URL}/accounts/payments/list/`,
+  PAYMENT_CREATE: `${BASE_URL}/accounts/payments/report/`,
+  PAYMENT_CONFIRM: (id: number) => `${BASE_URL}/accounts/payments/confirm/${id}/`,
 };
+
+
+
