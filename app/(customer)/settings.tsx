@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
@@ -9,26 +9,35 @@ export default function CustomerSettings() {
   const router = useRouter();
   const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const response = await fetch(ENDPOINTS.PROFILE, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   React.useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = await SecureStore.getItemAsync('userToken');
-        const response = await fetch(ENDPOINTS.PROFILE, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProfile();
+    setRefreshing(false);
+  };
 
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync('userToken');
@@ -37,66 +46,71 @@ export default function CustomerSettings() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.urduTitle}>سیٹنگز</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>
-               {(profile?.first_name || profile?.full_name || profile?.username || "C").charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.userName}>
-              {loading ? "..." : (profile?.first_name || profile?.full_name || profile?.username || "Customer")}
-            </Text>
-            <Text style={styles.userRole}>Dairy Customer</Text>
-          </View>
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.urduTitle}>سیٹنگز</Text>
         </View>
 
-        <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}>
-                <Ionicons name="person-outline" size={22} color="#3b82f6" />
-              </View>
-              <Text style={styles.menuText}>Edit Profile</Text>
+        <View style={styles.content}>
+          <View style={styles.profileSection}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitial}>
+                 {(profile?.first_name || profile?.full_name || profile?.username || "C").charAt(0).toUpperCase()}
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
-          </TouchableOpacity>
+            <View>
+              <Text style={styles.userName}>
+                {(loading && !refreshing) ? "..." : (profile?.first_name || profile?.full_name || profile?.username || "Customer")}
+              </Text>
+              <Text style={styles.userRole}>Dairy Customer</Text>
+            </View>
+          </View>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#f0fdf4' }]}>
-                <Ionicons name="notifications-outline" size={22} color="#22c55e" />
+          <View style={styles.menuSection}>
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}>
+                  <Ionicons name="person-outline" size={22} color="#3b82f6" />
+                </View>
+                <Text style={styles.menuText}>Edit Profile</Text>
               </View>
-              <Text style={styles.menuText}>Notifications</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#faf5ff' }]}>
-                <Ionicons name="shield-checkmark-outline" size={22} color="#a855f7" />
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.iconBox, { backgroundColor: '#f0fdf4' }]}>
+                  <Ionicons name="notifications-outline" size={22} color="#22c55e" />
+                </View>
+                <Text style={styles.menuText}>Notifications</Text>
               </View>
-              <Text style={styles.menuText}>Privacy</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+              <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.iconBox, { backgroundColor: '#faf5ff' }]}>
+                  <Ionicons name="shield-checkmark-outline" size={22} color="#a855f7" />
+                </View>
+                <Text style={styles.menuText}>Privacy</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity 
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -108,7 +122,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 10,
+    paddingTop: 1,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
     flexDirection: 'row',

@@ -240,20 +240,20 @@ export default function DriverHome() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); fetchData(); }}
-            tintColor="#fff"
+            tintColor="#000"
           />
         }
       >
-        {/* Premium Dark Header Section */}
-        <View style={styles.headerSection}>
+        {/* Top Header - White Background */}
+        <View style={styles.whiteHeader}>
           <View style={styles.headerTop}>
             <View style={styles.driverInfo}>
               <Text style={styles.greetingUrdu}>السلام علیکم</Text>
-              <Text style={styles.driverName} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={styles.driverName}>
                 {profile?.full_name || profile?.first_name || profile?.username || "Driver"}
               </Text>
-              <Text style={styles.routeDetailsLine} numberOfLines={1}>
-                {profile?.route_name || profile?.route || "DRIVER ROUTE"} • {deliveries.length} STOPS
+              <Text style={styles.routeDetailsLabel}>
+                {profile?.route_name || profile?.route || "Default Route"} • {deliveries.length} STOPS
               </Text>
             </View>
             <TouchableOpacity
@@ -263,40 +263,54 @@ export default function DriverHome() {
                 router.replace("/login");
               }}
             >
-              <Ionicons name="log-out-outline" size={20} color="#6b7280" />
+              <Ionicons name="log-out-outline" size={20} color="#000" />
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.statsSection}>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, styles.doneValue]}>{stats.delivered_count || 0}</Text>
-              <Text style={styles.statLabel}>DONE</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, styles.leftValue]}>{stats.pending_count || 0}</Text>
-              <Text style={styles.statLabel}>LEFT</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, styles.cashValue]}>Rs{((stats.today_collection || 0) / 1000).toFixed(1)}K</Text>
-              <Text style={styles.statLabel}>CASH</Text>
-            </View>
           </View>
         </View>
 
-        {/* Delivery List Section */}
+        {/* Stats Section - Dark Background */}
+        <View style={styles.darkStatsContainer}>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#10b981' }]}>{stats.delivered_count || 0}</Text>
+            <Text style={styles.statLabel}>DONE</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#ffffff' }]}>{stats.pending_count || 0}</Text>
+            <Text style={styles.statLabel}>LEFT</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#f59e0b' }]}>
+              {formatCash(stats.today_collection || 0)}
+            </Text>
+            <Text style={styles.statLabel}>CASH</Text>
+          </View>
+        </View>
+
+        {/* Main List Section */}
         <View style={styles.listContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>TODAY'S LIST</Text>
-            <Text style={styles.sectionUrdu}>آج کی فہرست</Text>
+            <View>
+              <Text style={styles.sectionTitle}>TODAY'S DELIVERY QUEUE</Text>
+              <Text style={styles.sectionUrdu}>آج کی ترتیبی فہرست</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.sequenceBtn}
+              onPress={() => router.push("/(driver)/route")}
+            >
+              <Ionicons name="swap-vertical" size={18} color="#6b7280" />
+              <Text style={styles.sequenceBtnText}>Sequence</Text>
+            </TouchableOpacity>
           </View>
 
           {deliveries.length === 0 ? (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
-                <Ionicons name="calendar-outline" size={32} color="#94a3b8" />
+                <Ionicons name="happy-outline" size={32} color="#94a3b8" />
               </View>
-              <Text style={styles.emptyTitle}>No Deliveries Today</Text>
-              <Text style={styles.emptySubtitle}>All caught up! Check back later.</Text>
+              <Text style={styles.emptyTitle}>Route is empty!</Text>
+              <Text style={styles.emptySubtitle}>No assignments for today.</Text>
             </View>
           ) : (
             deliveries.map((item, index) => {
@@ -319,45 +333,45 @@ export default function DriverHome() {
                     </Text>
                   </View>
 
-                  <View style={styles.customerInfo}>
+                  <View style={styles.customerContent}>
                     <Text style={styles.customerNameText}>{item.customer_name}</Text>
-                    <Text style={styles.addressTextSmall}>
-                      {(item.customer_house_no || item.customer_street) ? `${item.customer_house_no || ""}, ${item.customer_street || ""}` : "NO ADDRESS"}
+                    <Text style={styles.customerAddressText} numberOfLines={1}>
+                      {item.customer_house_no ? `${item.customer_house_no}, ` : ''}{item.customer_street}
                     </Text>
                   </View>
 
-                  <View style={styles.cardRight}>
+                  <View style={styles.cardActions}>
                     {isDelivered ? (
                       <TouchableOpacity
-                        style={styles.qtyDeliveredBadge}
+                        style={styles.doneBadge}
                         onPress={() => handleToggleDelivery(item.id)}
                       >
-                        <Text style={styles.qtyDeliveredText}>{parseFloat(item.quantity).toString()}L</Text>
-                        <Ionicons name="checkmark" size={16} color="#22c55e" />
+                        <Text style={styles.doneText}>{parseFloat(item.quantity).toString()}L</Text>
+                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
                       </TouchableOpacity>
                     ) : isCurrent ? (
-                      <View style={styles.activeActionsRow}>
+                      <View style={styles.activeActions}>
                         <TouchableOpacity
-                          style={styles.qtyInputBox}
+                          style={styles.qtyBox}
                           onPress={() => {
                             setEditQty(parseFloat(item.quantity).toString());
                             setEditingId(item.id);
                           }}
                         >
-                          <Text style={styles.qtyInputText}>{parseFloat(item.quantity).toString()}</Text>
+                          <Text style={styles.qtyValText}>{parseFloat(item.quantity).toString()}</Text>
                         </TouchableOpacity>
-                        <Text style={styles.qtyLabelSmall}>L</Text>
-
+                        
                         <TouchableOpacity
-                          style={styles.doneButton}
+                          style={styles.deliverBtn}
                           onPress={() => handleToggleDelivery(item.id)}
                         >
-                          <Text style={styles.doneButtonText}>Done</Text>
-                          <Ionicons name="checkmark" size={16} color="#fff" />
+                          <Ionicons name="send" size={16} color="#fff" />
                         </TouchableOpacity>
                       </View>
                     ) : (
-                      <Text style={styles.nextLabel}>Next</Text>
+                      <View style={styles.waitingBadge}>
+                         <Text style={styles.waitingText}>Wait</Text>
+                      </View>
                     )}
                   </View>
                 </View>
@@ -365,6 +379,7 @@ export default function DriverHome() {
             })
           )}
         </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
 
       {/* Modern Update Modal */}
@@ -413,31 +428,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  loadingText: {
-    color: '#94a3b8',
-    marginTop: 12,
-    fontWeight: '600',
-  },
   scrollContent: {
     backgroundColor: '#ffffff',
   },
-  headerSection: {
-    backgroundColor: '#000',
+  whiteHeader: {
+    backgroundColor: '#fff',
     padding: 24,
     paddingTop: 1,
-    paddingBottom: 48,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 24,
   },
   driverInfo: {
     flex: 1,
@@ -451,12 +454,12 @@ const styles = StyleSheet.create({
   driverName: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#000',
     letterSpacing: -0.5,
   },
-  routeDetailsLine: {
+  routeDetailsLabel: {
     fontSize: 10,
-    color: '#4b5563',
+    color: '#94a3b8',
     fontWeight: '800',
     marginTop: 6,
     letterSpacing: 1,
@@ -466,47 +469,52 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 15,
-    backgroundColor: '#111111',
+    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#f1f5f9',
   },
-  statsSection: {
+  darkStatsContainer: {
+    backgroundColor: '#000',
+    marginHorizontal: 24,
+    borderRadius: 32,
+    padding: 24,
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 32,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    marginTop: 10,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#111111',
-    borderRadius: 22,
-    paddingVertical: 18,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
   },
   statValue: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900',
   },
-  doneValue: { color: '#22c55e' },
-  leftValue: { color: '#ffffff' },
-  cashValue: { color: '#f59e0b' },
   statLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#4b5563',
     marginTop: 4,
     letterSpacing: 1,
   },
+  divider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#1e293b',
+  },
   listContainer: {
     padding: 24,
     backgroundColor: '#ffffff',
-    marginTop: -32,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
     minHeight: 600,
+    marginTop: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -525,6 +533,22 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontWeight: '500',
   },
+  sequenceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  sequenceBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6b7280',
+  },
   deliveryCard: {
     backgroundColor: '#ffffff',
     borderRadius: 24,
@@ -536,11 +560,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   currentCard: {
-    borderColor: '#3b82f6',
-    borderWidth: 1.5,
+    borderColor: '#000',
+    borderWidth: 2,
   },
   deliveredCard: {
-    opacity: 0.8,
+    opacity: 0.6,
     backgroundColor: '#f8fafc',
   },
   customerAvatar: {
@@ -557,7 +581,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#000',
   },
-  customerInfo: {
+  customerContent: {
     flex: 1,
   },
   customerNameText: {
@@ -565,68 +589,64 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000',
   },
-  addressTextSmall: {
+  customerAddressText: {
     fontSize: 11,
     color: '#94a3b8',
     marginTop: 2,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
-  cardRight: {
+  cardActions: {
     alignItems: 'flex-end',
   },
-  qtyDeliveredBadge: {
+  doneBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
     gap: 4,
   },
-  qtyDeliveredText: {
-    fontSize: 15,
+  doneText: {
+    fontSize: 14,
     fontWeight: '800',
-    color: '#22c55e',
+    color: '#10b981',
   },
-  activeActionsRow: {
+  activeActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  qtyInputBox: {
-    width: 44,
-    height: 38,
-    backgroundColor: '#ffffff',
+  qtyBox: {
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  qtyInputText: {
-    fontSize: 17,
+  qtyValText: {
+    fontSize: 16,
     fontWeight: '900',
     color: '#000',
   },
-  qtyLabelSmall: {
-    fontSize: 10,
-    color: '#94a3b8',
-    fontWeight: '800',
-    marginRight: 4,
-  },
-  doneButton: {
-    backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  deliverBtn: {
+    backgroundColor: '#000',
+    width: 38,
+    height: 38,
     borderRadius: 10,
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
   },
-  doneButtonText: {
-    color: '#ffffff',
+  waitingBadge: {
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  waitingText: {
     fontSize: 12,
-    fontWeight: '800',
-  },
-  nextLabel: {
-    fontSize: 14,
     fontWeight: '700',
     color: '#cbd5e1',
   },

@@ -12,6 +12,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  RefreshControl
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
@@ -23,6 +24,7 @@ export default function CustomerDetailsScreen() {
   
   const [activeTab, setActiveTab] = useState<"details" | "ledger">("ledger");
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Data states
@@ -46,6 +48,12 @@ export default function CustomerDetailsScreen() {
       fetchCustomerData();
     }
   }, [id]);
+  
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCustomerData();
+    setRefreshing(false);
+  };
 
   const fetchCustomerData = async () => {
     setIsLoading(true);
@@ -145,7 +153,7 @@ export default function CustomerDetailsScreen() {
     }
   };
 
-  if (isLoading || !customer) {
+  if (isLoading && !refreshing) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -222,6 +230,7 @@ export default function CustomerDetailsScreen() {
           renderItem={renderLedgerItem}
           contentContainerStyle={styles.listContent}
           style={{ flex: 1 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={
             <View style={{ alignItems: "center", marginTop: 40 }}>
               <Ionicons name="book-outline" size={48} color="#d1d5db" />
@@ -230,7 +239,11 @@ export default function CustomerDetailsScreen() {
           }
         />
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.listContent}>
+        <ScrollView 
+          style={{ flex: 1 }} 
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
           <ThemedView style={styles.formCard}>
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>FULL NAME</ThemedText>

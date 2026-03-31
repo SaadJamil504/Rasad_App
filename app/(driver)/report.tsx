@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
@@ -14,26 +14,35 @@ interface Delivery {
 export default function DriverReport() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [note, setNote] = useState("");
 
+  const fetchStats = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const res = await fetch(ENDPOINTS.DELIVERIES, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setDeliveries(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("❌ Error fetching report stats:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const token = await SecureStore.getItemAsync('userToken');
-        const res = await fetch(ENDPOINTS.DELIVERIES, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setDeliveries(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("❌ Error fetching report stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchStats();
+    setRefreshing(false);
+  };
 
   const totalStops = deliveries.length;
   const doneStops = deliveries.filter(d => d.status === 'delivered').length;
@@ -77,7 +86,7 @@ export default function DriverReport() {
     }
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
      return (
        <SafeAreaView style={styles.container}>
          <View style={styles.loadingWrapper}>
@@ -95,6 +104,7 @@ export default function DriverReport() {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Standard Header Row */}
         <View style={styles.headerRow}>

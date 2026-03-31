@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Modal
+  Modal,
+  RefreshControl
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -40,7 +41,14 @@ export default function ChangeQuantity() {
   const [showPicker, setShowPicker] = useState(false);
   
   const [isInitializing, setIsInitializing] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProfile();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -142,7 +150,7 @@ export default function ChangeQuantity() {
     </Modal>
   );
 
-  if (isInitializing) {
+  if (isInitializing && !refreshing) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#22c55e" />
@@ -156,6 +164,7 @@ export default function ChangeQuantity() {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.content}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>

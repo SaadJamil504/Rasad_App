@@ -12,6 +12,7 @@ interface Delivery {
   customer_house_no: string;
   customer_street: string;
   customer_area: string;
+  customer_address?: string;
   status: string;
   sequence_order?: number;
   customer_latitude?: number | string;
@@ -119,9 +120,9 @@ export default function DriverRoute() {
               <View style={styles.stepContent}>
                 <Text style={styles.customerName}>{item.customer_name}</Text>
                 <View style={styles.addressBox}>
-                  <Ionicons name="location-outline" size={14} color="#64748b" />
+                  <Ionicons name="location-outline" size={14} color="#64748b" style={{ marginTop: 3 }} />
                   <Text style={styles.addressText}>
-                    {item.customer_house_no}, {item.customer_street}, {item.customer_area}
+                    {item.customer_address || `${item.customer_house_no}, ${item.customer_street}, ${item.customer_area}`}
                   </Text>
                 </View>
                 {item.status === 'delivered' && (

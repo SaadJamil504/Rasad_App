@@ -181,6 +181,19 @@ export default function RoutesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <View style={styles.headerRow}>
+        <View>
+          <ThemedText style={styles.title}>Routes</ThemedText>
+          <ThemedText style={styles.subtitle}>ڈیلیوری کے راستے</ThemedText>
+        </View>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={openAddRoute}
+        >
+          <Ionicons name="add" size={24} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView 
         style={styles.container} 
         contentContainerStyle={styles.containerContent}
@@ -188,19 +201,6 @@ export default function RoutesScreen() {
           <RefreshControl refreshing={isLoading} onRefresh={fetchRoutes} />
         }
       >
-
-        <View style={styles.headerRow}>
-          <View>
-            <ThemedText style={styles.title}>Routes</ThemedText>
-            <ThemedText style={styles.subtitle}>ڈیلیوری کے راستے</ThemedText>
-          </View>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={openAddRoute}
-          >
-            <Ionicons name="add" size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
 
         {/* Quick Stats consistent with other pages */}
         <View style={styles.quickStats}>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   containerContent: {
     padding: 24,
-    paddingTop: 24,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   headerRow: {
@@ -397,12 +397,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "900",
     color: "#000",
+    lineHeight: 42,
+    paddingBottom: 6,
   },
   subtitle: {
     fontSize: 20,
     color: "#94a3b8",
     fontWeight: "500",
-    marginTop: 4,
+    marginTop: 10,
   },
   addButton: {
     backgroundColor: "#000",

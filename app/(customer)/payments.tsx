@@ -12,7 +12,8 @@ import {
   RefreshControl,
   ScrollView,
   Platform,
-  SafeAreaView
+  SafeAreaView,
+  Pressable
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
@@ -30,11 +31,91 @@ interface Payment {
   received_by_name?: string;
 }
 
+interface PaymentFormProps {
+  amount: string;
+  setAmount: (val: string) => void;
+  date: string;
+  dateLabel: string;
+  setShowDatePicker: (val: boolean) => void;
+  method: string;
+  setMethod: (val: string) => void;
+  submitting: boolean;
+  handleReportPayment: () => void;
+}
+
+const PaymentForm = ({ 
+  amount, 
+  setAmount, 
+  date, 
+  dateLabel, 
+  setShowDatePicker, 
+  method, 
+  setMethod, 
+  submitting, 
+  handleReportPayment 
+}: PaymentFormProps) => (
+  <View style={styles.recordFormCard}>
+    <View style={styles.row}>
+      <View style={[styles.formGroup, { flex: 1, marginRight: 12 }]}>
+        <Text style={styles.label}>Amount Paid</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Rs 0.00"
+          keyboardType="numeric"
+          value={amount}
+          onChangeText={setAmount}
+        />
+      </View>
+      <View style={[styles.formGroup, { flex: 1 }]}>
+        <Text style={styles.label}>Date</Text>
+        <Pressable 
+          style={styles.datePickerInput} 
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={styles.datePickerText}>
+            {dateLabel}
+          </Text>
+          <Ionicons name="calendar-outline" size={18} color="#64748b" />
+        </Pressable>
+      </View>
+    </View>
+
+    <View style={styles.formGroup}>
+      <Text style={styles.label}>Method</Text>
+      <View style={styles.methodTabs}>
+        {['Cash', 'Transfer', 'JazzCash', 'EasyPaisa'].map((m) => (
+          <TouchableOpacity 
+            key={m}
+            style={[styles.methodTab, method === m && styles.activeMethodTab]}
+            onPress={() => setMethod(m)}
+          >
+            <Text style={[styles.methodTabText, method === m && styles.activeMethodTabText]}>{m}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+
+    <TouchableOpacity 
+      style={[styles.submitBtn, submitting && { opacity: 0.7 }]} 
+      onPress={handleReportPayment}
+      disabled={submitting}
+    >
+      {submitting ? (
+        <ActivityIndicator color="#fff" size="small" />
+      ) : (
+        <>
+          <Text style={styles.submitBtnText}>Submit Record</Text>
+          <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </>
+      )}
+    </TouchableOpacity>
+  </View>
+);
+
 export default function CustomerPayments() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Form states
@@ -64,40 +145,44 @@ export default function CustomerPayments() {
   }, []);
 
   const handleReportPayment = async () => {
-    if (!amount || isNaN(parseFloat(amount))) {
-      Alert.alert("Invalid Input", "Please enter a valid amount.");
+    if (submitting) return;
+
+    if (!amount.trim() || isNaN(parseFloat(amount))) {
+      Alert.alert("Invalid Input", "Please enter a valid numerical amount.");
       return;
     }
 
     try {
       setSubmitting(true);
       const token = await SecureStore.getItemAsync('userToken');
-      const response = await fetch(ENDPOINTS.PAYMENT_CREATE, {
+      
+      const res = await fetch(ENDPOINTS.PAYMENT_CREATE, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          amount,
+          amount: amount.trim(),
           method,
           date,
-          note
+          note: note.trim()
         })
       });
 
-      if (response.ok) {
-        Alert.alert("Success", "Payment report submitted successfully.");
-        setModalVisible(false);
+      const responseData = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        Alert.alert("Success 🎉", "Payment reported! The owner will verify it shortly.");
         resetForm();
         fetchPayments();
       } else {
-        const errorData = await response.json();
-        Alert.alert("Error", errorData.detail || "Failed to submit payment report.");
+        const errorMsg = responseData.detail || responseData.message || "Failed to submit payment report.";
+        Alert.alert("Submission Error", errorMsg);
       }
     } catch (error) {
       console.error("❌ Error reporting payment:", error);
-      Alert.alert("Error", "An unexpected error occurred.");
+      Alert.alert("Network Error", "Could not connect to server. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -117,6 +202,25 @@ export default function CustomerPayments() {
       default: return '#f59e0b';
     }
   };
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Generate dates for picker (past 30 days and current)
+  const getDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      dates.push({
+        value: d.toISOString().split('T')[0],
+        label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      });
+    }
+    return dates;
+  };
+
+  const dateOptions = getDateOptions();
 
   const renderPaymentItem = ({ item }: { item: Payment }) => (
     <View style={styles.paymentCard}>
@@ -152,103 +256,94 @@ export default function CustomerPayments() {
     </View>
   );
 
-  const renderHeader = () => (
-    <View>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Payments</Text>
-          <Text style={styles.headerUrdu}>ادائیگیوں کا ریکارڑ</Text>
-        </View>
-      </View>
-
-      {/* Section 1: Record Payment */}
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>RECORD PAYMENT</Text>
-          <Text style={styles.urduSectionTitle}>ادائیگی درج کریں</Text>
-        </View>
-        
-        <View style={styles.recordFormCard}>
-          <View style={styles.row}>
-            <View style={[styles.formGroup, { flex: 1, marginRight: 12 }]}>
-              <Text style={styles.label}>Amount Paid</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Rs 0.00"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-              />
-            </View>
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Date</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="YYYY-MM-DD"
-                value={date}
-                onChangeText={setDate}
-              />
-            </View>
+  const renderDatePickerModal = () => (
+    <Modal visible={showDatePicker} animationType="slide" transparent>
+      <View style={styles.modalBg}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Date</Text>
+            <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+              <Ionicons name="close" size={24} color="#000" />
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Method</Text>
-            <View style={styles.methodTabs}>
-              {['Cash', 'Transfer', 'JazzCash', 'EasyPaisa'].map((m) => (
-                <TouchableOpacity 
-                  key={m}
-                  style={[styles.methodTab, method === m && styles.activeMethodTab]}
-                  onPress={() => setMethod(m)}
-                >
-                  <Text style={[styles.methodTabText, method === m && styles.activeMethodTabText]}>{m}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.submitBtn, submitting && { opacity: 0.7 }]} 
-            onPress={handleReportPayment}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Text style={styles.submitBtnText}>Submit Record</Text>
-                <Ionicons name="arrow-forward" size={18} color="#fff" />
-              </>
-            )}
-          </TouchableOpacity>
+          <ScrollView style={styles.modalScroll}>
+            {dateOptions.map((opt) => (
+              <TouchableOpacity 
+                key={opt.value} 
+                style={styles.modalItem}
+                onPress={() => {
+                  setDate(opt.value);
+                  setShowDatePicker(false);
+                }}
+              >
+                <Text style={[styles.modalItemText, date === opt.value && styles.modalItemActive]}>{opt.label}</Text>
+                {date === opt.value && <Ionicons name="checkmark-circle" size={20} color="#000" />}
+              </TouchableOpacity>
+            ))}
+            <View style={{height: 40}} />
+          </ScrollView>
         </View>
       </View>
-
-      {/* Section 2: History Header */}
-      <View style={[styles.sectionHeader, { paddingHorizontal: 20, marginTop: 12 }]}>
-        <Text style={styles.sectionTitle}>PAYMENT HISTORY</Text>
-        <Text style={styles.urduSectionTitle}>تاریخچہ</Text>
-      </View>
-    </View>
+    </Modal>
   );
+
 
   return (
     <SafeAreaView style={styles.container}>
+      {renderDatePickerModal()}
       {loading ? (
         <View style={styles.centerMode}>
           <ActivityIndicator size="large" color="#000000" />
           <Text style={styles.loadingText}>Fetching payment history...</Text>
         </View>
       ) : (
-        <FlatList
-          ListHeaderComponent={renderHeader}
-          data={payments}
-          renderItem={renderPaymentItem}
-          keyExtractor={(item) => item.id.toString()}
+        <ScrollView 
+          style={styles.container}
           contentContainerStyle={styles.listContainer}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchPayments(); }} />
           }
-          ListEmptyComponent={
+        >
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.headerTitle}>Payments</Text>
+              <Text style={styles.headerUrdu}>ادائیگیوں کا ریکارڑ</Text>
+            </View>
+          </View>
+
+          {/* Section 1: Record Payment */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>RECORD PAYMENT</Text>
+              <Text style={styles.urduSectionTitle}>ادائیگی درج کریں</Text>
+            </View>
+            
+            <PaymentForm 
+              amount={amount}
+              setAmount={setAmount}
+              date={date}
+              dateLabel={dateOptions.find(d => d.value === date)?.label || date}
+              setShowDatePicker={setShowDatePicker}
+              method={method}
+              setMethod={setMethod}
+              submitting={submitting}
+              handleReportPayment={handleReportPayment}
+            />
+          </View>
+
+          {/* Section 2: History Header */}
+          <View style={[styles.sectionHeader, { marginTop: 12 }]}>
+            <Text style={styles.sectionTitle}>PAYMENT HISTORY</Text>
+            <Text style={styles.urduSectionTitle}>تاریخچہ</Text>
+          </View>
+
+          {payments.length > 0 ? (
+            payments.map((item) => (
+              <React.Fragment key={item.id}>
+                {renderPaymentItem({ item })}
+              </React.Fragment>
+            ))
+          ) : (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="wallet-outline" size={40} color="#94a3b8" />
@@ -256,8 +351,8 @@ export default function CustomerPayments() {
               <Text style={styles.emptyTitle}>No payments yet</Text>
               <Text style={styles.emptySubtitle}>Your history will appear here.</Text>
             </View>
-          }
-        />
+          )}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -266,7 +361,7 @@ export default function CustomerPayments() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   header: {
-    paddingVertical: 10,
+    paddingVertical: 1,
     backgroundColor: '#fff',
   },
   headerTitle: { fontSize: 28, fontWeight: '800', color: '#000' },
@@ -318,6 +413,22 @@ const styles = StyleSheet.create({
     color: '#000',
     borderWidth: 1,
     borderColor: '#e2e8f0',
+  },
+  datePickerInput: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 50,
+  },
+  datePickerText: {
+    fontSize: 14,
+    color: '#000',
   },
   methodTabs: {
     flexDirection: 'row',
@@ -398,7 +509,7 @@ const styles = StyleSheet.create({
   noteText: { fontSize: 12, color: '#64748b', fontStyle: 'italic' },
   cardFooter: {
     marginTop: 12,
-    paddingTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     flexDirection: 'row',
@@ -427,5 +538,50 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     textAlign: 'center',
     marginTop: 4,
+  },
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    maxHeight: '70%',
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  modalScroll: {
+    padding: 24,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: '#475569',
+    fontWeight: '600',
+  },
+  modalItemActive: {
+    color: '#000',
+    fontWeight: '800',
   },
 });

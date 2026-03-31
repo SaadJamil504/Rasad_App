@@ -72,25 +72,24 @@ export default function CustomersScreen() {
         const balanceNum = parseFloat(customer.outstanding_balance || 0);
         
         if (activeFilter === "Overdue") return matchesSearch && balanceNum > 0;
-        if (activeFilter === "Active") return matchesSearch; // Everyone in this list is role: customer
+        if (activeFilter === "Active") return matchesSearch && balanceNum <= 0;
         return matchesSearch;
     });
 
     const getStatusInfo = (customer: any) => {
         const balance = parseFloat(customer.outstanding_balance || 0);
         if (balance > 0) return { label: "Overdue", color: "#ef4444", bg: "#fee2e2" };
-        if (balance === 0) return { label: "Clear", color: "#10b981", bg: "#d1fae5" };
         return { label: "Active", color: "#3b82f6", bg: "#dbeafe" };
     };
 
     const getInitialColor = (name: string) => {
-        const colors = ["#dbeafe", "#d1fae5", "#fef3c7", "#ede9fe"];
+        const colors = ["#f8fafc", "#f0fdf4", "#eff6ff", "#fef2f2"];
         const charCode = (name || "U").charCodeAt(0) || 0;
         return colors[charCode % colors.length];
     };
 
     const getInitialTextColor = (name: string) => {
-        const colors = ["#2563eb", "#059669", "#d97706", "#7c3aed"];
+        const colors = ["#64748b", "#10b981", "#3b82f6", "#ef4444"];
         const charCode = (name || "U").charCodeAt(0) || 0;
         return colors[charCode % colors.length];
     };
@@ -114,15 +113,15 @@ export default function CustomersScreen() {
                 <View style={styles.cardInfo}>
                     <ThemedText style={styles.nameText}>{name}</ThemedText>
                     <ThemedText style={styles.metaText}>
-                        #{item.id}  •  {item.area || item.city || 'Unassigned'}  •  {parseFloat(item.daily_quantity || 0).toFixed(1)}L/d
+                        {item.area || item.city || 'Unassigned Area'}  •  {parseFloat(item.daily_quantity || 0).toFixed(1)}L/day
                     </ThemedText>
                 </View>
 
                 <View style={styles.cardRight}>
                     <View style={styles.balanceContainer}>
-                        <ThemedText style={[styles.rsPrefix, { color: status.color }]}>Rs</ThemedText>
+                        {balance > 0 && <ThemedText style={[styles.rsPrefix, { color: status.color }]}>Rs</ThemedText>}
                         <ThemedText style={[styles.balanceText, { color: status.color }]}>
-                            {balance.toLocaleString()}
+                            {balance > 0 ? balance.toLocaleString() : "Clear"}
                         </ThemedText>
                     </View>
 
@@ -132,7 +131,6 @@ export default function CustomersScreen() {
                 </View>
             </TouchableOpacity>
         );
-
     };
 
     return (
@@ -204,10 +202,10 @@ const styles = StyleSheet.create({
         alignItems: "flex-start", 
         paddingHorizontal: 24, 
         paddingTop: 24, 
-        marginBottom: 24 
+        marginBottom: 32 
     },
-    title: { fontSize: 32, fontWeight: "900", color: "#000" },
-    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 4 },
+    title: { fontSize: 32, fontWeight: "900", color: "#000", lineHeight: 42, paddingBottom: 6 },
+    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 10 },
     addButton: { backgroundColor: "#000", flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, gap: 4 },
     addButtonText: { color: "#fff", fontWeight: "800", fontSize: 13 },
     searchRow: { paddingHorizontal: 24, marginBottom: 16 },

@@ -13,7 +13,8 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  RefreshControl
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ENDPOINTS } from "../../constants/Api";
@@ -21,6 +22,7 @@ import { ENDPOINTS } from "../../constants/Api";
 
 export default function DriverCashScreen() {
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -36,6 +38,12 @@ export default function DriverCashScreen() {
       fetchCustomers();
     }, [])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCustomers();
+    setRefreshing(false);
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -117,6 +125,7 @@ export default function DriverCashScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.headerRow}>
           <ThemedText style={styles.title}>Record Cash</ThemedText>

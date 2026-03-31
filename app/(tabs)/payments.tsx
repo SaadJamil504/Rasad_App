@@ -26,6 +26,7 @@ import { ENDPOINTS } from "../../constants/Api";
 export default function PaymentsScreen() {
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [payments, setPayments] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   
@@ -43,6 +44,12 @@ export default function PaymentsScreen() {
       fetchCustomers();
     }, [])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([fetchPayments(), fetchCustomers()]);
+    setRefreshing(false);
+  };
 
   const fetchPayments = async () => {
     try {
@@ -190,7 +197,13 @@ export default function PaymentsScreen() {
       </View>
 
       {activeTab === "new" ? (
-        <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+        <ScrollView 
+          style={styles.container} 
+          contentContainerStyle={{ padding: 20 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <ThemedView style={styles.formCard}>
             <ThemedText style={styles.formTitle}>Record New Payment</ThemedText>
             
@@ -306,7 +319,7 @@ export default function PaymentsScreen() {
         <ScrollView 
           style={styles.container} 
           contentContainerStyle={{ padding: 20 }}
-          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchPayments} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           {payments.length > 0 ? (
             payments.map((p) => (
@@ -360,10 +373,10 @@ const styles = StyleSheet.create({
     header: { 
         paddingHorizontal: 24, 
         paddingTop: 24, 
-        marginBottom: 24 
+        marginBottom: 32 
     },
-    title: { fontSize: 32, fontWeight: "900", color: "#000" },
-    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 4 },
+    title: { fontSize: 32, fontWeight: "900", color: "#000", lineHeight: 42, paddingBottom: 6 },
+    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 10 },
     tabContainer: { 
         flexDirection: "row", 
         marginHorizontal: 24, 

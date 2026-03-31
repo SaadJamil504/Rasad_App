@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   headerArea: {
     backgroundColor: '#fff',
-    paddingVertical: 10,
+    paddingVertical: 1,
     marginBottom: 20,
   },
   titleRow: {

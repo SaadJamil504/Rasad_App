@@ -92,21 +92,24 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     paddingTop: 24,
-    marginBottom: 24,
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: '900',
     color: '#000',
+    lineHeight: 42,
+    paddingBottom: 6,
   },
   subtitle: {
     fontSize: 20,
     color: '#94a3b8',
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: 10,
   },
   scrollContent: {
     paddingHorizontal: 24,
+    paddingTop: 10,
     paddingBottom: 40,
   },
   profileSection: {

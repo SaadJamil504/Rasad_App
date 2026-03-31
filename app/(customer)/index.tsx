@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   View,
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import { ENDPOINTS } from "../../constants/Api";
 export default function CustomerHome() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>({});
   const [deliveryStatus, setDeliveryStatus] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
@@ -23,6 +25,12 @@ export default function CustomerHome() {
   useEffect(() => {
     fetchCustomerData();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCustomerData();
+    setRefreshing(false);
+  };
 
   const fetchCustomerData = async () => {
     setIsLoading(true);
@@ -60,7 +68,7 @@ export default function CustomerHome() {
     router.replace("/login");
   };
 
-  if (isLoading) {
+  if (isLoading && !refreshing) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -76,6 +84,7 @@ export default function CustomerHome() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
         <View style={styles.header}>

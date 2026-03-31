@@ -160,10 +160,10 @@ const styles = StyleSheet.create({
         alignItems: "flex-start", 
         paddingHorizontal: 24, 
         paddingTop: 24, 
-        marginBottom: 24 
+        marginBottom: 32 
     },
-    title: { fontSize: 32, fontWeight: "900", color: "#000" },
-    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 4 },
+    title: { fontSize: 32, fontWeight: "900", color: "#000", lineHeight: 42, paddingBottom: 6 },
+    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 10 },
     addButton: { backgroundColor: "#000", flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, gap: 4 },
     addButtonText: { color: "#fff", fontWeight: "800", fontSize: 13 },
     searchRow: { paddingHorizontal: 24, marginBottom: 16 },

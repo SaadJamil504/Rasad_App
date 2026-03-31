@@ -4,11 +4,13 @@ import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, RefreshControl, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [dashboardStats, setDashboardStats] = useState<any[]>([]);
   const [overdueItems, setOverdueItems] = useState<any[]>([]);
   const [userRole, setUserRole] = useState("owner");
@@ -18,6 +20,12 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+  };
 
   const fetchDashboardData = async () => {
     setIsLoading(true);
@@ -148,19 +156,31 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <ThemedText style={styles.title}>Dashboard</ThemedText>
+          <ThemedText style={styles.subtitle}>اوور ویو</ThemedText>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={22} color="#000" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#000"]} // Android
+            tintColor="#000" // iOS
+          />
+        }
       >
-        <View style={styles.headerRow}>
-          <View>
-            <ThemedText style={styles.title}>Dashboard</ThemedText>
-            <ThemedText style={styles.subtitle}>اوور ویو</ThemedText>
-          </View>
-          <Pressable onPress={handleLogout} style={styles.logoutButton}>
-            <ThemedText style={styles.logoutText}>Sign Out</ThemedText>
-          </Pressable>
-        </View>
 
       {isLoading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 400 }}>
@@ -194,25 +214,26 @@ export default function HomeScreen() {
                   flexDirection: "row",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  marginBottom: 16,
                 }}
               >
                 <ThemedText style={styles.overdueTitle}>
                    {userRole === 'customer' ? 'Recent History' : 'Overdue Alerts'}
                 </ThemedText>
-                <Pressable>
+                <Pressable onPress={() => router.push("/(tabs)/customers")}>
                   <ThemedText
-                    style={{ color: "#3b82f6", fontWeight: "600", fontSize: 13 }}
+                    style={{ color: "#3b82f6", fontWeight: "700", fontSize: 13 }}
                   >
                     View All
                   </ThemedText>
                 </Pressable>
               </View>
 
-              {overdueItems.map((item) => (
+              {overdueItems.slice(0, 5).map((item) => (
                 <ThemedView key={item.id} style={styles.overdueAlertCard}>
                   <View style={styles.overdueAlertInfo}>
                     <ThemedText style={styles.overdueName}>{item.name}</ThemedText>
-                    <ThemedText style={{ color: item.color || "#e11d48", fontWeight: "700" }}>
+                    <ThemedText style={{ color: item.color || "#e11d48", fontWeight: "800" }}>
                       {item.amount}
                     </ThemedText>
                   </View>
@@ -248,44 +269,45 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   scrollContent: {
-    padding: 24,
-    paddingTop: 24,
     paddingBottom: 40,
   },
-  headerRow: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    paddingHorizontal: 24,
+    paddingTop: 24,
     marginBottom: 32,
   },
   title: {
     fontSize: 32,
     fontWeight: "900",
     color: "#000",
+    letterSpacing: -0.5,
+    lineHeight: 42,
+    paddingBottom: 6,
   },
   subtitle: {
     fontSize: 20,
     color: "#94a3b8",
     fontWeight: "500",
-    marginTop: 4,
+    marginTop: 10,
   },
   logoutButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "#fef2f2",
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#fee2e2",
-  },
-  logoutText: {
-    color: "#ef4444",
-    fontWeight: "700",
-    fontSize: 13,
+    borderColor: '#f1f5f9',
   },
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    paddingHorizontal: 24,
     gap: 12,
     marginBottom: 24,
   },
@@ -293,6 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     borderRadius: 24,
     padding: 20,
+    paddingTop: 16, // Reduced top padding
     borderWidth: 1,
     borderColor: "#f1f5f9",
   },
@@ -300,37 +323,44 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     color: "#94a3b8",
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: 1,
     textTransform: "uppercase",
+    lineHeight: 14,
+    paddingBottom: 2,
   },
   statValue: {
     fontSize: 24,
     fontWeight: "900",
     color: "#000",
+    lineHeight: 32,
+    paddingBottom: 2,
   },
   statDetail: {
     fontSize: 11,
     color: "#64728b",
     marginTop: 4,
     fontWeight: "600",
+    lineHeight: 16,
+    paddingBottom: 2,
   },
   overdueCard: {
-    borderRadius: 24,
-    padding: 20,
+    marginHorizontal: 24,
+    borderRadius: 28,
+    padding: 24, // Increased padding
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#f1f5f9",
   },
   overdueTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#000",
   },
   overdueAlertCard: {
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
+    borderRadius: 16,
+    padding: 14, // Increased padding
+    marginBottom: 10,
     backgroundColor: "#fef2f2",
     borderWidth: 1,
     borderColor: "#fecaca",
@@ -343,30 +373,35 @@ const styles = StyleSheet.create({
   },
   overdueName: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#b91c1c",
   },
   overdueText: {
-    fontSize: 14,
-    color: "#6b7280",
+    fontSize: 13,
+    color: "#991b1b",
+    opacity: 0.7,
+    fontWeight: "600",
   },
   pausedCard: {
-    borderRadius: 14,
+    marginHorizontal: 24,
+    borderRadius: 24,
     borderStyle: "dashed",
     borderColor: "#d1d5db",
     borderWidth: 1,
     backgroundColor: "#f8fafc",
-    padding: 16,
+    padding: 32,
     alignItems: "center",
   },
   pausedTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#111827",
     marginBottom: 6,
   },
   pausedDesc: {
     color: "#6b7280",
     textAlign: "center",
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
