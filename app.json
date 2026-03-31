@@ -36,7 +36,8 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "package": "com.saadjamil01.Rasad_app"
     },
     "web": {
       "output": "static",
@@ -61,6 +62,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e38d414a-462d-4066-94a5-be147eefa838"
+      }
     }
   }
 }
