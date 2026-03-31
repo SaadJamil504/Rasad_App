@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function OwnerSettings() {
   const router = useRouter();
@@ -9,8 +11,10 @@ export default function OwnerSettings() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.urduTitle}>سیٹنگز</Text>
+        <View>
+          <ThemedText style={styles.title}>Settings</ThemedText>
+          <ThemedText style={styles.subtitle}>سیٹنگز</ThemedText>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -19,19 +23,19 @@ export default function OwnerSettings() {
             <Ionicons name="business" size={32} color="#1d4ed8" />
           </View>
           <View>
-            <Text style={styles.userName}>Owner Dashboard</Text>
-            <Text style={styles.userRole}>System Administrator</Text>
+            <ThemedText style={styles.userName}>Owner Dashboard</ThemedText>
+            <ThemedText style={styles.userRole}>System Administrator</ThemedText>
           </View>
         </View>
 
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>General</Text>
+          <ThemedText style={styles.sectionTitle}>General</ThemedText>
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}>
                 <Ionicons name="notifications-outline" size={20} color="#3b82f6" />
               </View>
-              <Text style={styles.menuText}>Notifications</Text>
+              <ThemedText style={styles.menuText}>Notifications</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -41,18 +45,18 @@ export default function OwnerSettings() {
               <View style={[styles.iconBox, { backgroundColor: '#f0fdf4' }]}>
                 <Ionicons name="shield-checkmark-outline" size={20} color="#22c55e" />
               </View>
-              <Text style={styles.menuText}>Security</Text>
+              <ThemedText style={styles.menuText}>Security</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
 
-          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Support</Text>
+          <ThemedText style={[styles.sectionTitle, { marginTop: 24 }]}>Support</ThemedText>
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <View style={[styles.iconBox, { backgroundColor: '#faf5ff' }]}>
                 <Ionicons name="help-circle-outline" size={20} color="#a855f7" />
               </View>
-              <Text style={styles.menuText}>Help Center</Text>
+              <ThemedText style={styles.menuText}>Help Center</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -62,7 +66,7 @@ export default function OwnerSettings() {
               <View style={[styles.iconBox, { backgroundColor: '#fff7ed' }]}>
                 <Ionicons name="information-circle-outline" size={20} color="#f97316" />
               </View>
-              <Text style={styles.menuText}>About App</Text>
+              <ThemedText style={styles.menuText}>About App</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -73,7 +77,7 @@ export default function OwnerSettings() {
           onPress={() => router.replace("/login")}
         >
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <Text style={styles.logoutText}>Sign Out</Text>
+          <ThemedText style={styles.logoutText}>Sign Out</ThemedText>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -83,28 +87,26 @@ export default function OwnerSettings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   header: {
-    padding: 20,
-    paddingTop: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    marginBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '900',
     color: '#000',
   },
-  urduTitle: {
-    fontSize: 18,
-    color: '#9ca3af',
+  subtitle: {
+    fontSize: 20,
+    color: '#94a3b8',
+    fontWeight: '500',
+    marginTop: 4,
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   profileSection: {
@@ -112,35 +114,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     marginBottom: 32,
-    padding: 16,
+    padding: 20,
     backgroundColor: '#f8fafc',
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 18,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
   },
   userName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontWeight: '800',
+    color: '#1e293b',
   },
   userRole: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#94a3b8',
     marginTop: 2,
+    fontWeight: '600',
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#94a3b8',
-    marginBottom: 12,
+    marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -151,34 +154,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   menuText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#334155',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e293b',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
+    gap: 10,
+    paddingVertical: 20,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#fee2e2',
     backgroundColor: '#fef2f2',
@@ -186,7 +189,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#ef4444',
   },
 });

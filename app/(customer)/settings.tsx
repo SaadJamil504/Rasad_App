@@ -2,9 +2,38 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { ENDPOINTS } from "../../constants/Api";
 
 export default function CustomerSettings() {
   const router = useRouter();
+  const [profile, setProfile] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(ENDPOINTS.PROFILE, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync('userToken');
+    router.replace("/login");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -16,11 +45,15 @@ export default function CustomerSettings() {
       <View style={styles.content}>
         <View style={styles.profileSection}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color="#9ca3af" />
+            <Text style={styles.avatarInitial}>
+               {(profile?.first_name || profile?.full_name || profile?.username || "C").charAt(0).toUpperCase()}
+            </Text>
           </View>
           <View>
-            <Text style={styles.userName}>Sana Bibi</Text>
-            <Text style={styles.userRole}>Premium Customer</Text>
+            <Text style={styles.userName}>
+              {loading ? "..." : (profile?.first_name || profile?.full_name || profile?.username || "Customer")}
+            </Text>
+            <Text style={styles.userRole}>Dairy Customer</Text>
           </View>
         </View>
 
@@ -58,7 +91,7 @@ export default function CustomerSettings() {
 
         <TouchableOpacity 
           style={styles.logoutButton}
-          onPress={() => router.replace("/login")}
+          onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
           <Text style={styles.logoutText}>Sign Out</Text>
@@ -108,11 +141,16 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#000',
+  },
+  avatarInitial: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
   },
   userName: {
     fontSize: 18,

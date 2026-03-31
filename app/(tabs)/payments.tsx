@@ -12,19 +12,16 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    SafeAreaView,
     RefreshControl,
     LayoutAnimation,
     Platform,
     UIManager
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export default function PaymentsScreen() {
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
@@ -136,6 +133,22 @@ export default function PaymentsScreen() {
     } catch (e) { console.error(e); }
   };
 
+  const handleRejectPayment = async (id: number) => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      const response = await fetch(ENDPOINTS.PAYMENT_REJECT(id), {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        Alert.alert("Success", "Payment rejected!");
+        fetchPayments();
+      } else {
+        Alert.alert("Error", "Failed to reject payment.");
+      }
+    } catch (e) { console.error(e); }
+  };
+
   const togglePicker = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setShowCustPicker(!showCustPicker);
@@ -152,11 +165,14 @@ export default function PaymentsScreen() {
     (c.first_name || c.full_name || c.username || "").toLowerCase().includes(custSearch.toLowerCase())
   );
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={styles.headerRow}>
-        <ThemedText style={styles.title}>Payments</ThemedText>
-      </View>
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.header}>
+                <View>
+                    <ThemedText style={styles.title}>Payments</ThemedText>
+                    <ThemedText style={styles.subtitle}>ادائیگیوں کا ریکارڑ</ThemedText>
+                </View>
+            </View>
 
       <View style={styles.tabContainer}>
         <Pressable 
@@ -309,9 +325,14 @@ export default function PaymentsScreen() {
                      </ThemedText>
                   </View>
                   {p.status === "pending" && (
-                    <TouchableOpacity style={styles.confirmBtnSmall} onPress={() => handleConfirmPayment(p.id)}>
-                      <ThemedText style={styles.confirmBtnSmallText}>Confirm</ThemedText>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      <TouchableOpacity style={[styles.confirmBtnSmall, { backgroundColor: "#ef4444" }]} onPress={() => handleRejectPayment(p.id)}>
+                        <ThemedText style={styles.confirmBtnSmallText}>Reject</ThemedText>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.confirmBtnSmall} onPress={() => handleConfirmPayment(p.id)}>
+                        <ThemedText style={styles.confirmBtnSmallText}>Confirm</ThemedText>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               </ThemedView>
@@ -335,46 +356,96 @@ export default function PaymentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: { alignItems: "center", paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
-  title: { fontSize: 24, fontWeight: "900", color: "#111827" },
-  tabContainer: { flexDirection: "row", marginHorizontal: 20, backgroundColor: "#f1f5f9", borderRadius: 15, padding: 4, marginTop: 15, marginBottom: 15 },
-  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 12 },
-  activeTab: { backgroundColor: "#fff", elevation: 1 },
-  tabText: { fontSize: 13, color: "#64748b", fontWeight: "700" },
-  activeTabText: { color: "#111827" },
-  container: { flex: 1 },
-  paymentCard: { padding: 16, borderRadius: 20, borderWidth: 1.5, borderColor: "#e2e8f0", marginBottom: 15, backgroundColor: "#fff" },
-  payTop: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
-  customerName: { fontSize: 16, fontWeight: "800", color: "#1e293b" },
-  payAmount: { fontSize: 17, fontWeight: "900" },
-  dateText: { fontSize: 11, color: "#94a3b8", marginTop: 2 },
-  payFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  bgConfirmed: { backgroundColor: "#d1fae5" },
-  bgPending: { backgroundColor: "#fef3c7" },
-  statusText: { fontSize: 10, fontWeight: "800" },
-  txtConfirmed: { color: "#065f46" },
-  txtPending: { color: "#92400e" },
-  confirmBtnSmall: { backgroundColor: "#111827", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  confirmBtnSmallText: { color: "#fff", fontSize: 11, fontWeight: "800" },
-  formCard: { padding: 20, borderRadius: 24, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0" },
-  formTitle: { fontSize: 18, fontWeight: "900", color: "#111827", marginBottom: 20, textAlign: "center" },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 10, fontWeight: "900", color: "#94a3b8", marginBottom: 6, letterSpacing: 1 },
-  selector: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#f8fafc", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#e2e8f0" },
-  inlinePicker: { marginTop: 4, backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", padding: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  inlineSearch: { backgroundColor: "#f1f5f9", borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 14 },
-  pickerItem: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
-  currencyInputWrap: { flexDirection: "row", alignItems: "center", backgroundColor: "#f8fafc", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", paddingHorizontal: 14 },
-  currencyPrefix: { fontSize: 16, fontWeight: "800", color: "#64748b", marginRight: 8 },
-  currencyInput: { flex: 1, paddingVertical: 14, fontSize: 16, fontWeight: "900", color: "#111827" },
-  readonlyValue: { fontSize: 16, fontWeight: "900", color: "#111827", paddingVertical: 14 },
-  methodRow: { flexDirection: "row", gap: 10 },
-  methodBtn: { flex: 1, paddingVertical: 14, alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#f8fafc" },
-  methodBtnActive: { backgroundColor: "#111827", borderColor: "#111827" },
-  methodBtnText: { color: "#64748b", fontWeight: "700" },
-  methodBtnTextActive: { color: "#fff" },
-  saveBtn: { backgroundColor: "#065f46", paddingVertical: 18, alignItems: "center", borderRadius: 16, marginTop: 10 },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "900" },
-  empty: { alignItems: "center", marginTop: 100 }
+    safeArea: { flex: 1, backgroundColor: "#ffffff" },
+    header: { 
+        paddingHorizontal: 24, 
+        paddingTop: 24, 
+        marginBottom: 24 
+    },
+    title: { fontSize: 32, fontWeight: "900", color: "#000" },
+    subtitle: { fontSize: 20, color: "#94a3b8", fontWeight: "500", marginTop: 4 },
+    tabContainer: { 
+        flexDirection: "row", 
+        marginHorizontal: 24, 
+        backgroundColor: "#f1f5f9", 
+        borderRadius: 16, 
+        padding: 4, 
+        marginBottom: 24 
+    },
+    tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 12 },
+    activeTab: { backgroundColor: "#fff", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
+    tabText: { fontSize: 11, color: "#64748b", fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
+    activeTabText: { color: "#000" },
+    container: { flex: 1 },
+    paymentCard: { 
+        padding: 20, 
+        borderRadius: 24, 
+        borderWidth: 1, 
+        borderColor: "#f1f5f9", 
+        marginBottom: 16, 
+        backgroundColor: "#fff" 
+    },
+    payTop: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
+    customerName: { fontSize: 18, fontWeight: "800", color: "#1e293b" },
+    payAmount: { fontSize: 20, fontWeight: "900" },
+    dateText: { fontSize: 12, color: "#94a3b8", marginTop: 4, fontWeight: "600" },
+    payFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 16 },
+    statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    bgConfirmed: { backgroundColor: "#f0fdf4" },
+    bgPending: { backgroundColor: "#fefce8" },
+    statusText: { fontSize: 10, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
+    txtConfirmed: { color: "#166534" },
+    txtPending: { color: "#854d0e" },
+    confirmBtnSmall: { backgroundColor: "#000", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+    confirmBtnSmallText: { color: "#fff", fontSize: 11, fontWeight: "800" },
+    formCard: { 
+        padding: 24, 
+        borderRadius: 28, 
+        backgroundColor: "#f8fafc", 
+        borderWidth: 1, 
+        borderColor: "#f1f5f9" 
+    },
+    formTitle: { fontSize: 18, fontWeight: "900", color: "#000", marginBottom: 24, textAlign: "center" },
+    inputGroup: { marginBottom: 24 },
+    label: { fontSize: 10, fontWeight: "800", color: "#94a3b8", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" },
+    selector: { 
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        backgroundColor: "#fff", 
+        borderRadius: 16, 
+        padding: 16, 
+        borderWidth: 1, 
+        borderColor: "#f1f5f9" 
+    },
+    inlinePicker: { 
+        marginTop: 8, 
+        backgroundColor: "#fff", 
+        borderRadius: 16, 
+        borderWidth: 1, 
+        borderColor: "#f1f5f9", 
+        padding: 12, 
+        shadowColor: "#000", 
+        shadowOffset: { width: 0, height: 6 }, 
+        shadowOpacity: 0.1, 
+        shadowRadius: 15, 
+        elevation: 5 
+    },
+    inlineSearch: { backgroundColor: "#f1f5f9", borderRadius: 12, padding: 14, marginBottom: 10, fontSize: 14, fontWeight: "600" },
+    pickerItem: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
+    currencyInputWrap: { 
+        flexDirection: "row", 
+        alignItems: "center", 
+        backgroundColor: "#fff", 
+        borderRadius: 16, 
+        borderWidth: 1, 
+        borderColor: "#f1f5f9", 
+        paddingHorizontal: 16 
+    },
+    currencyPrefix: { fontSize: 18, fontWeight: "800", color: "#64748b", marginRight: 10 },
+    currencyInput: { flex: 1, paddingVertical: 18, fontSize: 18, fontWeight: "800", color: "#000" },
+    readonlyValue: { fontSize: 18, fontWeight: "800", color: "#000", paddingVertical: 18 },
+    saveBtn: { backgroundColor: "#000", paddingVertical: 20, alignItems: "center", borderRadius: 20, marginTop: 10 },
+    saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "800", letterSpacing: 0.5 },
+    empty: { alignItems: "center", marginTop: 80, padding: 40 }
 });

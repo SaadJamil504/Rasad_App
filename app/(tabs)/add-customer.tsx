@@ -44,7 +44,7 @@ export default function AddCustomerScreen() {
 
   // Invite states
   const [inviteEmail, setInviteEmail] = useState("");
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [generatedToken, setGeneratedToken] = useState("");
 
   useEffect(() => {
     fetchRoutes();
@@ -76,7 +76,7 @@ export default function AddCustomerScreen() {
       
       // Strict matching with Web Fields + Backend User/Staff requirements
       const payload: any = {
-        full_name: name,
+        first_name: name,
         phone_number: whatsapp,
         house_no: houseNo,
         street: street,
@@ -122,11 +122,8 @@ export default function AddCustomerScreen() {
   };
 
   const handleGenerateInvite = async () => {
-    if (!inviteEmail) {
-      Alert.alert("Error", "Email is required.");
-      return;
-    }
     setIsLoading(true);
+    setGeneratedToken("");
     try {
       const token = await SecureStore.getItemAsync('userToken');
       const response = await fetch(ENDPOINTS.INVITATIONS as string, {
@@ -135,14 +132,22 @@ export default function AddCustomerScreen() {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email: inviteEmail, role: "customer" })
+        body: JSON.stringify({ role: "customer" })
       });
       const data = await response.json();
       if (response.ok) {
-        setGeneratedLink(`https://rasad-production.up.railway.app/customer-signup?token=${data.token}`);
-        Alert.alert("Link Generated");
+        setGeneratedToken(data.token);
+      } else {
+        Alert.alert("Error", data.detail || "Could not generate link.");
       }
     } catch (e) { Alert.alert("Error", "Server unreachable."); } finally { setIsLoading(false); }
+  };
+
+  const handleCopyLink = async (link: string) => {
+    if (link) {
+      await Clipboard.setStringAsync(link);
+      Alert.alert("Copied", "Link copied to clipboard!");
+    }
   };
 
   return (
@@ -255,12 +260,46 @@ export default function AddCustomerScreen() {
           </ThemedView>
         ) : (
           <ThemedView style={styles.card}>
-             {/* Invite content remains same but styled more like screenshot */}
-             <ThemedText style={styles.label}>EMAIL ADDRESS</ThemedText>
-             <TextInput placeholder="customer@mail.com" value={inviteEmail} onChangeText={setInviteEmail} style={styles.input} />
-             <TouchableOpacity style={styles.saveBtn} onPress={handleGenerateInvite} disabled={isLoading}>
-                <ThemedText style={styles.saveBtnText}>Generate Invite Link</ThemedText>
-             </TouchableOpacity>
+             <ThemedText style={[styles.label, { marginBottom: 12, fontSize: 13, color: "#475569" }]}>
+               Generate a secure link to share with a new customer. They will be prompted to fill out their details and set a password.
+             </ThemedText>
+             
+             {!generatedToken ? (
+               <TouchableOpacity style={styles.saveBtn} onPress={handleGenerateInvite} disabled={isLoading}>
+                 {isLoading ? (
+                   <ActivityIndicator color="#fff" />
+                 ) : (
+                   <ThemedText style={styles.saveBtnText}>Generate Invite Link</ThemedText>
+                 )}
+               </TouchableOpacity>
+             ) : (
+               <View style={styles.linkResultContainer}>
+                 <ThemedText style={styles.label}>WEB LINK (CLICKABLE IN WHATSAPP)</ThemedText>
+                 <ThemedText style={{fontSize: 11, color: '#64748b', marginBottom: 4}}>Redirects to app automatically if backend is pushed to Railway.</ThemedText>
+                 <View style={styles.linkBox}>
+                   <ThemedText style={styles.linkText} numberOfLines={1} ellipsizeMode="tail">
+                     https://rasad-production.up.railway.app/customer-signup?token={generatedToken}
+                   </ThemedText>
+                   <Pressable style={styles.copyIconBtn} onPress={() => handleCopyLink(`https://rasad-production.up.railway.app/customer-signup?token=${generatedToken}`)}>
+                     <Ionicons name="copy-outline" size={20} color="#10b981" />
+                   </Pressable>
+                 </View>
+
+                 <ThemedText style={[styles.label, {marginTop: 6}]}>RAW DEEP LINK (NOT CLICKABLE IN WHATSAPP)</ThemedText>
+                 <View style={styles.linkBox}>
+                   <ThemedText style={styles.linkText} numberOfLines={1} ellipsizeMode="tail">
+                     rasadapp://customer-signup?token={generatedToken}
+                   </ThemedText>
+                   <Pressable style={styles.copyIconBtn} onPress={() => handleCopyLink(`rasadapp://customer-signup?token=${generatedToken}`)}>
+                     <Ionicons name="copy-outline" size={20} color="#10b981" />
+                   </Pressable>
+                 </View>
+
+                 <TouchableOpacity style={[styles.saveBtn, { backgroundColor: "#f3f4f6", borderWidth: 1, borderColor: "#e2e8f0" }]} onPress={() => setGeneratedToken("")}>
+                    <ThemedText style={[styles.saveBtnText, { color: "#111827" }]}>Generate Another</ThemedText>
+                 </TouchableOpacity>
+               </View>
+             )}
           </ThemedView>
         )}
       </ScrollView>
@@ -323,5 +362,9 @@ const styles = StyleSheet.create({
   modalContent: { backgroundColor: "#fff", borderTopLeftRadius: 24, borderTopRightRadius: 24, height: "60%", padding: 20 },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
   modalTitle: { fontSize: 18, fontWeight: "800" },
-  routeItem: { paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }
+  routeItem: { paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
+  linkResultContainer: { marginTop: 8 },
+  linkBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, paddingLeft: 14, paddingRight: 6, paddingVertical: 6, marginBottom: 16 },
+  linkText: { flex: 1, fontSize: 14, color: '#334155' },
+  copyIconBtn: { padding: 10, backgroundColor: '#f0fdf4', borderRadius: 8 },
 });

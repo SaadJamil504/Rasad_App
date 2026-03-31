@@ -42,6 +42,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="drivers"
+        options={{
+          title: 'Drivers',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="car" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="routes"
         options={{
           title: 'Routes',
@@ -51,20 +60,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="entry"
-        options={{
-          title: 'Entry',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="payments"
         options={{
           title: 'Payments',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="drivers-report"
+        options={{
+          title: 'Reports',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text" size={size} color={color} />
           ),
         }}
       />
@@ -84,6 +93,10 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="add-customer"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="add-driver"
         options={{ href: null }}
       />
     </Tabs>

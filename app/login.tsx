@@ -20,10 +20,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState("Owner");
   const [isLoading, setIsLoading] = useState(false);
-
-  const roles = ["Owner", "Driver", "Customer"];
 
   const handleLogin = async () => {
     if (!phoneNumber.trim()) {
@@ -46,7 +43,6 @@ export default function LoginScreen() {
         body: JSON.stringify({
           phone_number: phoneNumber,
           password: password,
-          role: selectedRole.toLowerCase(),
         }),
       });
 
@@ -67,13 +63,24 @@ export default function LoginScreen() {
           await SecureStore.setItemAsync('userToken', data.access);
         }
         
+        // Save user info for global access
+        if (data.role) {
+          await SecureStore.setItemAsync('userRole', data.role);
+        }
+
         setIsLoading(false);
-        // Success: Redirect based on role
-        if (selectedRole === "Customer") {
+        
+        // Success: Redirect based on role returned from backend
+        const userRole = data.role?.toLowerCase();
+        
+        if (userRole === "customer") {
           router.replace("/(customer)" as any);
-        } else if (selectedRole === "Driver") {
+        } else if (userRole === "driver") {
           router.replace("/(driver)" as any);
+        } else if (userRole === "owner") {
+          router.replace("/(tabs)" as any);
         } else {
+          // Fallback if role is missing or unknown
           router.replace("/(tabs)" as any);
         }
 
@@ -115,29 +122,6 @@ export default function LoginScreen() {
           {/* Subtitle with Urdu text */}
           <Text style={styles.subtitle}>راساد</Text>
           <Text style={styles.subtitleEn}>Milk delivery, organised.</Text>
-
-          {/* Role Selector */}
-          <View style={styles.roleContainer}>
-            {roles.map((role) => (
-              <TouchableOpacity
-                key={role}
-                style={[
-                  styles.roleButton,
-                  selectedRole === role && styles.roleButtonSelected,
-                ]}
-                onPress={() => setSelectedRole(role)}
-              >
-                <Text
-                  style={[
-                    styles.roleButtonText,
-                    selectedRole === role && styles.roleButtonTextSelected,
-                  ]}
-                >
-                  {role}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           {/* Phone Number Input */}
           <View style={styles.inputContainer}>
@@ -246,33 +230,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 32,
     fontWeight: "400",
-  },
-  roleContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 32,
-    width: "100%",
-  },
-  roleButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#CCCCCC",
-    backgroundColor: "#FFFFFF",
-  },
-  roleButtonSelected: {
-    borderColor: "#000000",
-    backgroundColor: "#000000",
-  },
-  roleButtonText: {
-    fontSize: 13,
-    color: "#999999",
-    fontWeight: "500",
-  },
-  roleButtonTextSelected: {
-    color: "#FFFFFF",
   },
   inputContainer: {
     width: "100%",

@@ -130,7 +130,10 @@ export default function CustomerHome() {
             <Text style={styles.actionUrdu}>مقدار</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push("/(customer)/bill" as any)}
+          >
             <View style={[styles.actionIcon, { backgroundColor: '#faf5ff' }]}>
               <Ionicons name="receipt" size={24} color="#9333ea" />
             </View>

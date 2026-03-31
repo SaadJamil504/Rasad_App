@@ -4,48 +4,46 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
-    Pressable,
     RefreshControl,
     SafeAreaView,
     StyleSheet,
     TextInput,
     View,
-    TouchableOpacity,
-    Alert
+    TouchableOpacity
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
-import { ENDPOINTS } from "../../constants/Api";
+import { ENDPOINTS, BASE_URL } from "../../constants/Api";
 
-export default function CustomersScreen() {
+export default function DriversScreen() {
     const router = useRouter();
-    const [customers, setCustomers] = useState<any[]>([]);
+    const [drivers, setDrivers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeFilter, setActiveFilter] = useState<"All" | "Overdue" | "Active">("All");
 
     useFocusEffect(
         useCallback(() => {
-            fetchCustomers();
+            fetchDrivers();
         }, [])
     );
 
-    const fetchCustomers = async () => {
+    const fetchDrivers = async () => {
         setIsLoading(true);
         try {
             const token = await SecureStore.getItemAsync('userToken');
             if (!token) return;
 
-            const response = await fetch(ENDPOINTS.CUSTOMERS_LIST as string, {
+            // Reuse staff endpoint but filter for drivers
+            const response = await fetch(`${BASE_URL}/accounts/staff/?role=driver`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
                 }
             });
             const data = await response.json();
-            console.log("DEBUG: Customers Staff API:", JSON.stringify(data));
 
             if (response.status === 401 || data.code === "token_not_valid") {
                 Alert.alert("Session Expired", "Your session has expired. Please log in again.");
@@ -56,7 +54,7 @@ export default function CustomersScreen() {
             }
 
             const list = Array.isArray(data) ? data : (data.results || []);
-            setCustomers(list);
+            setDrivers(list);
         } catch (error) {
             console.error(error);
         } finally {
@@ -64,24 +62,10 @@ export default function CustomersScreen() {
         }
     };
 
-    // BUILT-IN FAILSAFE: Check first_name, full_name, AND username
-    const filteredCustomers = customers.filter((customer) => {
-        const nameToSearch = (customer.first_name || customer.full_name || customer.username || "").toLowerCase();
-        const matchesSearch = nameToSearch.includes(searchQuery.toLowerCase());
-        
-        const balanceNum = parseFloat(customer.outstanding_balance || 0);
-        
-        if (activeFilter === "Overdue") return matchesSearch && balanceNum > 0;
-        if (activeFilter === "Active") return matchesSearch; // Everyone in this list is role: customer
-        return matchesSearch;
+    const filteredDrivers = drivers.filter((driver) => {
+        const nameToSearch = (driver.first_name || driver.full_name || driver.username || "").toLowerCase();
+        return nameToSearch.includes(searchQuery.toLowerCase());
     });
-
-    const getStatusInfo = (customer: any) => {
-        const balance = parseFloat(customer.outstanding_balance || 0);
-        if (balance > 0) return { label: "Overdue", color: "#ef4444", bg: "#fee2e2" };
-        if (balance === 0) return { label: "Clear", color: "#10b981", bg: "#d1fae5" };
-        return { label: "Active", color: "#3b82f6", bg: "#dbeafe" };
-    };
 
     const getInitialColor = (name: string) => {
         const colors = ["#dbeafe", "#d1fae5", "#fef3c7", "#ede9fe"];
@@ -95,18 +79,12 @@ export default function CustomersScreen() {
         return colors[charCode % colors.length];
     };
 
-    const renderCustomerCard = ({ item }: { item: any }) => {
-        const status = getStatusInfo(item);
+    const renderDriverCard = ({ item }: { item: any }) => {
         const name = item.first_name || item.full_name || item.username || "Unknown";
         const initial = name.charAt(0).toUpperCase();
-        const balance = parseFloat(item.outstanding_balance || 0);
 
         return (
-            <TouchableOpacity 
-                activeOpacity={0.7}
-                style={styles.customerCard}
-                onPress={() => router.push({ pathname: "/customer-details", params: { id: item.id } })}
-            >
+            <ThemedView style={styles.driverCard}>
                 <View style={[styles.avatarCircle, { backgroundColor: getInitialColor(name) }]}>
                     <ThemedText style={[styles.avatarText, { color: getInitialTextColor(name) }]}>{initial}</ThemedText>
                 </View>
@@ -114,25 +92,17 @@ export default function CustomersScreen() {
                 <View style={styles.cardInfo}>
                     <ThemedText style={styles.nameText}>{name}</ThemedText>
                     <ThemedText style={styles.metaText}>
-                        #{item.id}  •  {item.area || item.city || 'Unassigned'}  •  {parseFloat(item.daily_quantity || 0).toFixed(1)}L/d
+                        <Ionicons name="call" size={12} /> {item.phone_number || 'No Phone'}
                     </ThemedText>
                 </View>
 
                 <View style={styles.cardRight}>
-                    <View style={styles.balanceContainer}>
-                        <ThemedText style={[styles.rsPrefix, { color: status.color }]}>Rs</ThemedText>
-                        <ThemedText style={[styles.balanceText, { color: status.color }]}>
-                            {balance.toLocaleString()}
-                        </ThemedText>
-                    </View>
-
-                    <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
-                        <ThemedText style={[styles.statusTabText, { color: status.color }]}>{status.label}</ThemedText>
+                    <View style={styles.statusBadge}>
+                        <ThemedText style={styles.statusTabText}>Active</ThemedText>
                     </View>
                 </View>
-            </TouchableOpacity>
+            </ThemedView>
         );
-
     };
 
     return (
@@ -140,12 +110,12 @@ export default function CustomersScreen() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View>
-                        <ThemedText style={styles.title}>Customers</ThemedText>
-                        <ThemedText style={styles.subtitle}>صارفین کی فہرست</ThemedText>
+                        <ThemedText style={styles.title}>Drivers</ThemedText>
+                        <ThemedText style={styles.subtitle}>ڈرائیورز کی فہرست</ThemedText>
                     </View>
                     <TouchableOpacity 
                         style={styles.addButton} 
-                        onPress={() => router.push("/(tabs)/add-customer")}
+                        onPress={() => router.push("/(tabs)/add-driver")}
                     >
                         <Ionicons name="add" size={22} color="#fff" />
                         <ThemedText style={styles.addButtonText}>Add New</ThemedText>
@@ -156,7 +126,7 @@ export default function CustomersScreen() {
                     <View style={styles.searchContainer}>
                         <Ionicons name="search-outline" size={20} color="#94a3b8" />
                         <TextInput
-                            placeholder="Search name or reg no..."
+                            placeholder="Search driver name..."
                             style={styles.searchInput}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
@@ -164,29 +134,15 @@ export default function CustomersScreen() {
                     </View>
                 </View>
 
-                <View style={styles.filterTabs}>
-                    {(["All", "Overdue", "Active"] as const).map((f) => (
-                        <Pressable 
-                            key={f} 
-                            onPress={() => setActiveFilter(f)}
-                            style={[styles.filterTab, activeFilter === f && styles.activeFilterTab]}
-                        >
-                            <ThemedText style={[styles.filterTabText, activeFilter === f && styles.activeFilterText]}>
-                                {f}
-                            </ThemedText>
-                        </Pressable>
-                    ))}
-                </View>
-
                 <FlatList
-                    data={filteredCustomers}
-                    renderItem={renderCustomerCard}
+                    data={filteredDrivers}
+                    renderItem={renderDriverCard}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={styles.listContent}
-                    refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchCustomers} />}
+                    refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchDrivers} />}
                     ListEmptyComponent={
                         <View style={styles.empty}>
-                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>No customers found</ThemedText>}
+                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>No drivers found</ThemedText>}
                         </View>
                     }
                 />
@@ -221,13 +177,8 @@ const styles = StyleSheet.create({
         borderColor: "#f1f5f9" 
     },
     searchInput: { flex: 1, paddingVertical: 14, marginLeft: 12, fontSize: 15, fontWeight: "600", color: "#000" },
-    filterTabs: { flexDirection: "row", backgroundColor: "#f1f5f9", marginHorizontal: 24, borderRadius: 16, padding: 4, marginBottom: 20 },
-    filterTab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 12 },
-    activeFilterTab: { backgroundColor: "#fff", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-    filterTabText: { color: "#64748b", fontWeight: "800", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase" },
-    activeFilterText: { color: "#000" },
     listContent: { paddingHorizontal: 24, paddingBottom: 40 },
-    customerCard: { 
+    driverCard: { 
         flexDirection: "row", 
         alignItems: "center", 
         backgroundColor: "#fff", 
@@ -243,10 +194,7 @@ const styles = StyleSheet.create({
     nameText: { fontSize: 18, fontWeight: "800", color: "#1e293b" },
     metaText: { fontSize: 12, color: "#94a3b8", marginTop: 4, fontWeight: "600" },
     cardRight: { alignItems: "flex-end" },
-    balanceContainer: { flexDirection: "row", alignItems: "baseline", gap: 2 },
-    rsPrefix: { fontSize: 12, fontWeight: "800" },
-    balanceText: { fontSize: 20, fontWeight: "900" },
-    statusBadge: { marginTop: 8, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    statusTabText: { fontSize: 10, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
+    statusBadge: { backgroundColor: "#dbeafe", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    statusTabText: { fontSize: 10, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5, color: "#3b82f6" },
     empty: { alignItems: "center", marginTop: 60, padding: 40 },
 });

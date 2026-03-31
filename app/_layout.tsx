@@ -19,6 +19,8 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="modal" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(customer)" options={{ headerShown: false }} />
+        <Stack.Screen name="(driver)" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaView>
   );

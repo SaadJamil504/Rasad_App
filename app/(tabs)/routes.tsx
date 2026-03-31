@@ -189,10 +189,10 @@ export default function RoutesScreen() {
         }
       >
 
-        {/* Header Consistent with Customers.tsx */}
         <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
+          <View>
             <ThemedText style={styles.title}>Routes</ThemedText>
+            <ThemedText style={styles.subtitle}>ڈیلیوری کے راستے</ThemedText>
           </View>
           <TouchableOpacity 
             style={styles.addButton}
@@ -203,7 +203,7 @@ export default function RoutesScreen() {
         </View>
 
         {/* Quick Stats consistent with other pages */}
-        <ThemedView style={styles.quickStats}>
+        <View style={styles.quickStats}>
           <ThemedView style={styles.statBox}>
             <ThemedText style={styles.statNumber}>{routesData.length}</ThemedText>
             <ThemedText style={styles.statLabel}>Total Routes</ThemedText>
@@ -214,7 +214,7 @@ export default function RoutesScreen() {
             </ThemedText>
             <ThemedText style={styles.statLabel}>Unassigned</ThemedText>
           </ThemedView>
-        </ThemedView>
+        </View>
 
         {/* Routes List */}
         <ThemedView style={styles.listCard}>
@@ -383,73 +383,75 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   containerContent: {
-    padding: 16,
+    padding: 24,
+    paddingTop: 24,
     paddingBottom: 40,
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    backgroundColor: "#ffffff",
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    marginBottom: 32,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#000",
+  },
+  subtitle: {
+    fontSize: 20,
+    color: "#94a3b8",
+    fontWeight: "500",
+    marginTop: 4,
   },
   addButton: {
-    backgroundColor: "#111827",
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: "#000",
+    padding: 12,
+    borderRadius: 14,
   },
   quickStats: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
-    backgroundColor: "#ffffff",
+    gap: 12,
+    marginBottom: 32,
   },
   statBox: {
-    width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    padding: 14,
+    flex: 1,
+    backgroundColor: "#f8fafc",
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f1f5f9",
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#000000",
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#000",
   },
   statLabel: {
-    color: "#6b7280",
-    marginTop: 2,
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#94a3b8",
+    marginTop: 6,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   listCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 14,
-    padding: 2,
   },
   sectionHeader: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#000",
+    marginBottom: 16,
   },
   routeCard: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    backgroundColor: "#ffffff",
+    borderColor: "#f1f5f9",
   },
   routeTop: {
     flexDirection: "row",
@@ -458,9 +460,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   dotAssigned: {
     backgroundColor: "#10b981",
@@ -469,195 +471,220 @@ const styles = StyleSheet.create({
     backgroundColor: "#f59e0b",
   },
   routeNameText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1e293b",
   },
-  routeMetaText: { fontSize: 13, color: "#9ca3af", marginTop: 4, fontWeight: "600" },
-  editBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "#eff6ff", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  routeMetaText: {
+    fontSize: 13,
+    color: "#94a3b8",
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  editBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
   routeFooter: {
     flexDirection: "row",
     gap: 16,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 12,
+    borderTopColor: "#f1f5f9",
+    paddingTop: 16,
+    marginTop: 4,
   },
   footerStat: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
   footerStatText: {
     fontSize: 12,
-    color: "#4b5563",
-    fontWeight: "600",
+    color: "#64748b",
+    fontWeight: "700",
   },
   emptyState: {
     alignItems: "center",
     paddingVertical: 60,
   },
   emptyText: {
-    color: "#9ca3af",
+    color: "#94a3b8",
     marginTop: 8,
+    fontWeight: "600",
   },
   
-  // Modal Consistency
+  // Modal Standard Styles
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#f1f5f9",
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#000",
   },
   modalBody: {
-    padding: 16,
+    padding: 24,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   labelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#374151",
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#94a3b8",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   urduLabel: {
     fontSize: 12,
     color: "#9ca3af",
   },
   modalInput: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
+    backgroundColor: "#f8fafc",
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 16,
+    fontWeight: "600",
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
   },
   dropdownSelector: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 10,
-    padding: 12,
+    backgroundColor: "#f8fafc",
+    borderRadius: 16,
+    padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
   },
   dropdownValue: {
-    color: "#111827",
-    fontSize: 15,
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "600",
   },
   customerSection: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   customerListContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    marginTop: 4,
+    marginTop: 8,
   },
   customerSelectBtn: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 8,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f1f5f9",
+    backgroundColor: "#fff",
   },
   customerSelectBtnActive: {
     borderColor: "#10b981",
-    backgroundColor: "#ecfdf5",
+    backgroundColor: "#f0fdf4",
   },
   custName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1e293b",
   },
   custNameActive: {
-    color: "#065f46",
+    color: "#166534",
   },
   custSub: {
     fontSize: 11,
-    color: "#6b7280",
+    color: "#94a3b8",
     marginTop: 2,
+    fontWeight: "600",
   },
   modalFooter: {
     gap: 12,
     marginTop: 10,
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   confirmButton: {
-    backgroundColor: "#111827",
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: "#000",
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: "center",
   },
   confirmButtonText: {
     color: "#ffffff",
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 16,
   },
   cancelButton: {
-    padding: 14,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f1f5f9",
   },
   cancelButtonText: {
-    color: "#4b5563",
-    fontWeight: "600",
+    color: "#64748b",
+    fontWeight: "700",
   },
   
-  // Picker
+  // Picker Overlay
   pickerOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
   },
   pickerContent: {
     backgroundColor: "#ffffff",
-    borderRadius: 20,
-    padding: 20,
-    width: "100%",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: 40,
   },
   pickerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 20,
+    color: "#000",
   },
   pickerItem: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#f1f5f9",
   },
   pickerItemText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
+    fontWeight: "700",
+    color: "#1e293b",
   },
   pickerItemPhone: {
     fontSize: 12,
-    color: "#6b7280",
+    color: "#94a3b8",
     marginTop: 2,
+    fontWeight: "600",
   },
   pickerClose: {
-    marginTop: 20,
-    backgroundColor: "#111827",
-    padding: 12,
-    borderRadius: 10,
+    marginTop: 24,
+    backgroundColor: "#f1f5f9",
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
   },
   pickerCloseText: {
-    color: "#ffffff",
+    color: "#64748b",
     fontWeight: "700",
+    fontSize: 15,
   }
 });

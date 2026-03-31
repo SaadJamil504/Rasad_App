@@ -86,6 +86,26 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/accounts/bill/details/:
+    get:
+      operationId: accounts_bill_details_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/bill/pdf/:
+    get:
+      operationId: accounts_bill_pdf_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/accounts/collection-stats/:
     get:
       operationId: accounts_collection_stats_retrieve
@@ -96,6 +116,38 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/accounts/daily-report/:
+    get:
+      operationId: accounts_daily_report_list
+      description: Owners see reports for today. Drivers see their own report for
+        today if submitted.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyReport'
+          description: ''
+    post:
+      operationId: accounts_daily_report_create
+      description: Driver submits their final daily report.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReport'
+          description: ''
   /api/accounts/dashboard/alerts/:
     get:
       operationId: accounts_dashboard_alerts_retrieve
@@ -247,6 +299,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/accounts/driver-customers/:
+    get:
+      operationId: accounts_driver_customers_list
+      description: List all customers assigned to the driver's route.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/driver-stats/:
+    get:
+      operationId: accounts_driver_stats_retrieve
+      description: Get daily stats for the driver (e.g., cash collected today).
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/accounts/invitations/:
     get:
@@ -1431,6 +1516,60 @@ components:
       description: |-
         * `active` - Active
         * `paused` - Paused
+    DailyReport:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        driver:
+          type: integer
+          readOnly: true
+        driver_name:
+          type: string
+          readOnly: true
+        driver_username:
+          type: string
+          readOnly: true
+        dairy_name:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+          readOnly: true
+        total_milk:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+        customers_served:
+          type: integer
+          readOnly: true
+        total_customers:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - customers_served
+      - dairy_name
+      - date
+      - driver
+      - driver_name
+      - driver_username
+      - id
+      - total_cash
+      - total_customers
+      - total_milk
     Delivery:
       type: object
       properties:
@@ -1949,7 +2088,6 @@ components:
       - amount
       - confirmed_at
       - created_at
-      - customer
       - customer_name
       - customer_username
       - id

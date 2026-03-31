@@ -34,6 +34,11 @@ export const ENDPOINTS = {
   PAYMENTS_LIST: `${BASE_URL}/accounts/payments/list/`,
   PAYMENT_CREATE: `${BASE_URL}/accounts/payments/report/`,
   PAYMENT_CONFIRM: (id: number) => `${BASE_URL}/accounts/payments/confirm/${id}/`,
+  PAYMENT_REJECT: (id: number) => `${BASE_URL}/accounts/payments/reject/${id}/`,
+  DAILY_REPORTS: `${BASE_URL}/accounts/daily-report/`,
+  DRIVER_CUSTOMERS: `${BASE_URL}/accounts/driver-customers/`,
+  DRIVER_STATS: `${BASE_URL}/accounts/driver-stats/`,
+  BILL_PDF: `${BASE_URL}/accounts/bill/pdf/`,
 };
 
 

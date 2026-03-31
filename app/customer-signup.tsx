@@ -14,6 +14,8 @@ import {
   Pressable
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 import { ENDPOINTS } from "../constants/Api";
 
 export default function CustomerSignupScreen() {
@@ -36,6 +38,34 @@ export default function CustomerSignupScreen() {
   const [milkType, setMilkType] = useState<"cow" | "buffalo" | "both">("buffalo");
   const [dailyQuantity, setDailyQuantity] = useState("3");
   const [address, setAddress] = useState("");
+  const [region, setRegion] = useState({
+    latitude: 34.0151,
+    longitude: 71.5249,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
+
+  // Auto-Geocoding: Fetch coordinates when address changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (address.length > 5) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              setRegion({
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01
+              });
+            }
+          })
+          .catch(err => console.error("Geocoding Error:", err));
+      }
+    }, 1500); // 1.5s debounce
+    return () => clearTimeout(timer);
+  }, [address]);
 
   useEffect(() => {
     if (token) {
@@ -87,7 +117,9 @@ export default function CustomerSignupScreen() {
         daily_quantity: dailyQuantity,
         address: address,
         city: "Karachi", // Default for now
-        role: "customer"
+        role: "customer",
+        latitude: region.latitude,
+        longitude: region.longitude
       };
 
       const response = await fetch(ENDPOINTS.INVITATION_SIGNUP, {
@@ -211,9 +243,46 @@ export default function CustomerSignupScreen() {
                   onChangeText={setAddress}
                   multiline
                   numberOfLines={3}
-                  placeholder="House #, Street, Area..."
+                  placeholder="House #, Street, Area... (Type to move map)"
                   style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
                 />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Pin Exact Location</ThemedText>
+                {Platform.OS !== 'web' ? (
+                  <View style={styles.mapContainer}>
+                    <MapView
+                      style={styles.map}
+                      region={region}
+                      onPress={(e) => {
+                        setRegion(prev => ({
+                          ...prev,
+                          latitude: e.nativeEvent.coordinate.latitude,
+                          longitude: e.nativeEvent.coordinate.longitude
+                        }));
+                      }}
+                    >
+                      <Marker
+                        draggable
+                        coordinate={{ latitude: region.latitude, longitude: region.longitude }}
+                        onDragEnd={(e) => {
+                          setRegion(prev => ({
+                            ...prev,
+                            latitude: e.nativeEvent.coordinate.latitude,
+                            longitude: e.nativeEvent.coordinate.longitude
+                          }));
+                        }}
+                      />
+                    </MapView>
+                  </View>
+                ) : (
+                  <View style={styles.webMapPlaceholder}>
+                    <ThemedText style={{ color: '#6b7280', textAlign: 'center' }}>
+                      Exact map pinning is available on the mobile app.{'\n'}We will use the typed address above.
+                    </ThemedText>
+                  </View>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
@@ -267,6 +336,26 @@ const styles = StyleSheet.create({
   header: { marginBottom: 30 },
   title: { fontSize: 32, fontWeight: "800", color: "#111827" },
   subtitle: { fontSize: 16, color: "#6b7280", marginTop: 8 },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginTop: 8,
+  },
+  map: {
+    flex: 1,
+  },
+  webMapPlaceholder: {
+    height: 150,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    marginTop: 8,
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 20,
