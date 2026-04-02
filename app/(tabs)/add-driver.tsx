@@ -7,6 +7,7 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
+    TextInput,
     View,
     SafeAreaView,
     TouchableOpacity
@@ -20,8 +21,70 @@ import { ENDPOINTS } from "../../constants/Api";
 
 export default function AddDriverScreen() {
   const router = useRouter();
+  const [activeMode, setActiveMode] = useState<"manual" | "invite">("manual");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedToken, setGeneratedToken] = useState("");
+
+  // Manual Form States
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+
+  const handleSaveManual = async () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert("Required", "Please enter the driver's full name.");
+      return;
+    }
+
+    const phoneRegex = /^03\d{9}$/;
+    if (!phoneNumber.trim() || !phoneRegex.test(phoneNumber.trim())) {
+      Alert.alert("Invalid Phone", "Please enter a valid 11-digit phone number (e.g., 03XXXXXXXXX).");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      
+      const payload = {
+        first_name: name,
+        phone_number: phoneNumber,
+        license_number: licenseNumber,
+        role: "driver",
+        status: "active"
+      };
+
+      const response = await fetch(ENDPOINTS.DRIVERS as string, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        Alert.alert("Success", "Driver added successfully!", [
+          { text: "Done", onPress: () => router.back() }
+        ]);
+      } else {
+        const errorMessage = responseData.non_field_errors?.[0] || 
+                           responseData.phone_number?.[0] ||
+                           responseData.message || 
+                           responseData.detail ||
+                           "Could not add driver.";
+        Alert.alert("Error", errorMessage);
+      }
+    } catch (error: any) {
+      Alert.alert("Error", "Check Connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGenerateInvite = async () => {
     setIsLoading(true);
@@ -65,7 +128,48 @@ export default function AddDriverScreen() {
           </View>
         </View>
 
-        <ThemedView style={styles.card}>
+        <View style={styles.tabContainer}>
+          <Pressable 
+            onPress={() => setActiveMode("manual")}
+            style={[styles.tab, activeMode === "manual" && styles.activeTab]}
+          >
+            <ThemedText style={[styles.tabText, activeMode === "manual" && styles.activeTabText]}>Manual Form</ThemedText>
+          </Pressable>
+          <Pressable 
+            onPress={() => setActiveMode("invite")}
+            style={[styles.tab, activeMode === "invite" && styles.activeTab]}
+          >
+            <ThemedText style={[styles.tabText, activeMode === "invite" && styles.activeTabText]}>Send Link</ThemedText>
+          </Pressable>
+        </View>
+
+        {activeMode === "manual" ? (
+          <ThemedView style={styles.card}>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>FULL NAME</ThemedText>
+              <TextInput placeholder="Enter driver name" value={name} onChangeText={setName} style={styles.input} />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>PHONE NUMBER</ThemedText>
+              <TextInput placeholder="03XXXXXXXXX" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" style={styles.input} maxLength={11} />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>LICENSE NUMBER (OPTIONAL)</ThemedText>
+              <TextInput placeholder="ABC-123" value={licenseNumber} onChangeText={setLicenseNumber} style={styles.input} />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, isLoading && { opacity: 0.7 }]} 
+              onPress={handleSaveManual} 
+              disabled={isLoading}
+            >
+              <ThemedText style={styles.saveBtnText}>Save Driver</ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        ) : (
+          <ThemedView style={styles.card}>
             <ThemedText style={[styles.label, { marginBottom: 12, fontSize: 13, color: "#475569" }]}>
             Generate a secure link to share with a new delivery driver. They will use this link to set up their app access.
             </ThemedText>
@@ -106,7 +210,8 @@ export default function AddDriverScreen() {
                 </TouchableOpacity>
             </View>
             )}
-        </ThemedView>
+          </ThemedView>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -119,8 +224,15 @@ const styles = StyleSheet.create({
   backBtn: { backgroundColor: "#f3f4f6", padding: 8, borderRadius: 10 },
   title: { fontSize: 22, fontWeight: "900", color: "#111827" },
   urduHeader: { color: "#6b7280", fontSize: 13 },
+  tabContainer: { flexDirection: "row", backgroundColor: "#f3f4f6", borderRadius: 12, padding: 4, marginBottom: 20 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 10 },
+  activeTab: { backgroundColor: "#fff", elevation: 1 },
+  tabText: { fontSize: 13, fontWeight: "700", color: "#6b7280" },
+  activeTabText: { color: "#111827" },
   card: { backgroundColor: "#fff", borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "#f1f5f9" },
+  inputGroup: { marginBottom: 16 },
   label: { fontSize: 11, fontWeight: "800", color: "#94a3b8", marginBottom: 6, letterSpacing: 1 },
+  input: { backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 14, fontSize: 15, color: "#1e293b" },
   saveBtn: { backgroundColor: "#10b981", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 16 },
   saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
   linkResultContainer: { marginTop: 8 },

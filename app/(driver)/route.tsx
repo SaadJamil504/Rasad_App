@@ -90,8 +90,8 @@ export default function DriverRoute() {
         }
       >
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Delivery Sequence</Text>
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>Delivery Sequence</Text>
             <Text style={styles.urduTitle}>ترتیبی فہرست</Text>
           </View>
           {deliveries.filter(d => d.status !== 'delivered' && d.status !== 'paused').length > 0 && (
@@ -154,18 +154,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: 12
   },
   title: { 
-    fontSize: 32, 
+    fontSize: 28, 
     fontWeight: '900', 
     color: '#000' 
   },
   urduTitle: { 
-    fontSize: 20, 
+    fontSize: 18, 
     color: '#94a3b8', 
     fontWeight: '500',
-    marginTop: 4 
+    marginTop: 2 
   },
   navButton: {
     backgroundColor: '#3b82f6', // Blueprint navigation color

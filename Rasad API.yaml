@@ -1596,6 +1596,9 @@ components:
         customer_city:
           type: string
           readOnly: true
+        customer_address:
+          type: string
+          readOnly: true
         customer_latitude:
           type: string
           format: decimal
@@ -1642,6 +1645,7 @@ components:
           readOnly: true
       required:
       - customer
+      - customer_address
       - customer_area
       - customer_city
       - customer_house_no
@@ -1979,6 +1983,9 @@ components:
           type: string
           readOnly: true
         customer_city:
+          type: string
+          readOnly: true
+        customer_address:
           type: string
           readOnly: true
         customer_latitude:

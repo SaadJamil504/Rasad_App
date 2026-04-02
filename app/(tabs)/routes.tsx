@@ -181,7 +181,7 @@ export default function RoutesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      <View style={styles.headerRow}>
+      <View style={styles.header}>
         <View>
           <ThemedText style={styles.title}>Routes</ThemedText>
           <ThemedText style={styles.subtitle}>ڈیلیوری کے راستے</ThemedText>
@@ -190,7 +190,8 @@ export default function RoutesScreen() {
           style={styles.addButton}
           onPress={openAddRoute}
         >
-          <Ionicons name="add" size={24} color="#FFF" />
+          <Ionicons name="add" size={22} color="#FFF" />
+          <ThemedText style={styles.addButtonText}>Add New</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -387,11 +388,13 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 40,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 32,
+  header: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "flex-start", 
+    paddingHorizontal: 24, 
+    paddingTop: 24, 
+    marginBottom: 32 
   },
   title: {
     fontSize: 32,
@@ -408,8 +411,17 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: "#000",
-    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 14,
+    gap: 4,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
   },
   quickStats: {
     flexDirection: "row",

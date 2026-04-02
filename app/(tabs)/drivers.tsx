@@ -36,8 +36,8 @@ export default function DriversScreen() {
             const token = await SecureStore.getItemAsync('userToken');
             if (!token) return;
 
-            // Reuse staff endpoint but filter for drivers
-            const response = await fetch(`${BASE_URL}/accounts/staff/?role=driver`, {
+            // Fetch absolute staff and filter in frontend consistent with routes.tsx
+            const response = await fetch(`${ENDPOINTS.DRIVERS}?t=${Date.now()}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
@@ -53,10 +53,16 @@ export default function DriversScreen() {
                 return;
             }
 
-            const list = Array.isArray(data) ? data : (data.results || []);
-            setDrivers(list);
+            const fullList = Array.isArray(data) ? data : (data.results || []);
+            
+            // Broaden filter to include placeholder users (tmp_) and case-insensitive roles
+            const driversList = fullList.filter((u: any) => 
+                u.role?.toLowerCase() === "driver" || 
+                (u.username && u.username.toLowerCase().startsWith("tmp_"))
+            );
+            setDrivers(driversList);
         } catch (error) {
-            console.error(error);
+            console.error("Fetch Drivers Error:", error);
         } finally {
             setIsLoading(false);
         }

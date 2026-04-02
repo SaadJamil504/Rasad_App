@@ -95,6 +95,56 @@ export default function LoginScreen() {
     }
   };
 
+  const handleBypassLogin = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/accounts/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: "03010779759",
+          password: "saad1234",
+        }),
+      });
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("❌ Bypass Login Error: Backend returned HTML instead of JSON.", text.substring(0, 500));
+        Alert.alert("Server Error", "The server returned an invalid response.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (response.ok) {
+        if (data.access) await SecureStore.setItemAsync('userToken', data.access);
+        if (data.role) await SecureStore.setItemAsync('userRole', data.role);
+        
+        setIsLoading(false);
+        const userRole = data.role?.toLowerCase();
+        
+        if (userRole === "customer") {
+          router.replace("/(customer)" as any);
+        } else if (userRole === "driver") {
+          router.replace("/(driver)" as any);
+        } else {
+          router.replace("/(tabs)" as any);
+        }
+      } else {
+        setIsLoading(false);
+        Alert.alert("Bypass Login Failed", data.error || data.detail || "Invalid hardcoded credentials");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.error("Bypass Login Error:", error);
+      Alert.alert("Connection Error", "Could not connect to the server.");
+    }
+  };
+
   const handleRegister = () => {
     router.push("/register");
   };
@@ -161,6 +211,21 @@ export default function LoginScreen() {
           >
             <Text style={styles.loginButtonText}>
               {isLoading ? "Signing in..." : "Sign in →"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Bypass Login Button */}
+          <TouchableOpacity
+            style={[
+              styles.bypassButton,
+              isLoading && styles.loginButtonDisabled,
+            ]}
+            onPress={handleBypassLogin}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.bypassButtonText}>
+              {isLoading ? "Please wait..." : "Bypass Login (Owner) ⚡"}
             </Text>
           </TouchableOpacity>
 
@@ -253,7 +318,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 12,
+    marginBottom: 12,
+  },
+  bypassButton: {
+    width: "100%",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#000000",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
+  },
+  bypassButtonText: {
+    color: "#000000",
+    fontSize: 16,
+    fontWeight: "600",
   },
   loginButtonDisabled: {
     opacity: 0.7,
