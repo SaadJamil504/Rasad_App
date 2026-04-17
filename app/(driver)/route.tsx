@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
 import { Linking, TouchableOpacity } from 'react-native';
+import { useLanguage } from "../../contexts/LanguageContext";
 
 interface Delivery {
   id: string | number;
@@ -20,6 +21,7 @@ interface Delivery {
 }
 
 export default function DriverRoute() {
+  const { t } = useLanguage();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,13 +93,13 @@ export default function DriverRoute() {
       >
         <View style={styles.headerRow}>
           <View style={{ flex: 1, marginRight: 8 }}>
-            <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>Delivery Sequence</Text>
-            <Text style={styles.urduTitle}>ترتیبی فہرست</Text>
+            <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{t.deliverySequence}</Text>
+            <Text style={styles.urduTitle}>{t.deliverySequenceUrdu}</Text>
           </View>
           {deliveries.filter(d => d.status !== 'delivered' && d.status !== 'paused').length > 0 && (
             <TouchableOpacity style={styles.navButton} onPress={handleStartNavigation}>
               <Ionicons name="navigate-circle" size={24} color="#fff" />
-              <Text style={styles.navButtonText}>Navigate</Text>
+              <Text style={styles.navButtonText}>{t.navigate}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -105,7 +107,7 @@ export default function DriverRoute() {
         {deliveries.length === 0 ? (
           <View style={styles.emptyState}>
              <Ionicons name="map-outline" size={48} color="#9ca3af" />
-             <Text style={styles.emptyText}>No routes assigned for today.</Text>
+             <Text style={styles.emptyText}>{t.noRoutes}</Text>
           </View>
         ) : (
           deliveries.map((item, index) => (
@@ -128,7 +130,7 @@ export default function DriverRoute() {
                 {item.status === 'delivered' && (
                   <View style={styles.doneBadge}>
                     <Ionicons name="checkmark-done" size={12} color="#059669" />
-                    <Text style={styles.doneBadgeText}>Delivered</Text>
+                    <Text style={styles.doneBadgeText}>{t.done}</Text>
                   </View>
                 )}
               </View>

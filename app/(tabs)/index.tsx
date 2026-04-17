@@ -4,14 +4,18 @@ import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, RefreshControl, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, RefreshControl, TouchableOpacity, SafeAreaView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function HomeScreen() {
+  const { language, toggleLanguage, t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [dashboardStats, setDashboardStats] = useState<any[]>([]);
+  const [rawStats, setRawStats] = useState<any>({
+    today_deliveries: "0", delivered_count: 0, pending_count: 0,
+    today_collection: 0, overdueCustomersCount: 0, totalOverdue: 0, activeCustomersCount: 0
+  });
   const [overdueItems, setOverdueItems] = useState<any[]>([]);
   const [userRole, setUserRole] = useState("owner");
   const cardWidth = "48%";
@@ -103,42 +107,15 @@ export default function HomeScreen() {
       }, 0);
 
 
-      const updatedStats = [
-        {
-          key: "deliveries",
-          title: "Today's Deliveries",
-          value: statsData.today_deliveries || "0",
-          detail: `${statsData.delivered_count || 0} done ${statsData.pending_count || 0} pending`,
-          accent: "#10b981",
-          border: "#22c55e",
-        },
-        {
-          key: "revenue",
-          title: "Today's Collection",
-          value: `Rs ${statsData.today_collection || statsData.today_revenue || todaysRevenue || 0}`,
-          detail: `Recorded today`,
-          accent: "#f97316",
-          border: "#fb923c",
-        },
-        {
-          key: "overdue",
-          title: "Overdue Payments",
-          value: `${overdueCustomersCount}`,
-          detail: `Rs ${totalOverdue.toLocaleString()} total due`,
-          accent: "#ef4444",
-          border: "#fca5a5",
-        },
-        {
-          key: "active",
-          title: "Active Customers",
-          value: `${activeCustomersCount}`,
-          detail: `Total registered`,
-          accent: "#6366f1",
-          border: "#8b5cf6",
-        },
-      ];
-      
-      setDashboardStats(updatedStats);
+      setRawStats({
+        today_deliveries: statsData.today_deliveries || "0",
+        delivered_count: statsData.delivered_count || 0,
+        pending_count: statsData.pending_count || 0,
+        today_collection: statsData.today_collection || statsData.today_revenue || todaysRevenue || 0,
+        overdueCustomersCount,
+        totalOverdue,
+        activeCustomersCount
+      });
       setOverdueItems(overdueArr);
     } catch (error) {
       console.error("Dashboard Error:", error);
@@ -153,20 +130,64 @@ export default function HomeScreen() {
     router.replace("/login");
   };
 
+  const dashboardStats = [
+    {
+      key: "deliveries",
+      title: t.deliveries,
+      value: rawStats.today_deliveries,
+      detail: t.deliveriesDetail(rawStats.delivered_count, rawStats.pending_count),
+      accent: "#10b981",
+      border: "#22c55e",
+    },
+    {
+      key: "revenue",
+      title: t.collection,
+      value: `Rs ${Number(rawStats.today_collection).toLocaleString()}`,
+      detail: t.collectionDetail,
+      accent: "#f97316",
+      border: "#fb923c",
+    },
+    {
+      key: "overdue",
+      title: t.overdueTitle,
+      value: `${rawStats.overdueCustomersCount}`,
+      detail: t.overdueDetail(rawStats.totalOverdue.toLocaleString()),
+      accent: "#ef4444",
+      border: "#fca5a5",
+    },
+    {
+      key: "active",
+      title: t.activeTitle,
+      value: `${rawStats.activeCustomersCount}`,
+      detail: t.activeDetail,
+      accent: "#6366f1",
+      border: "#8b5cf6",
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <ThemedText style={styles.title}>Dashboard</ThemedText>
-          <ThemedText style={styles.subtitle}>اوور ویو</ThemedText>
+          <ThemedText style={styles.title}>{t.dashboard}</ThemedText>
+          <ThemedText style={styles.subtitle}>{t.overview}</ThemedText>
         </View>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={22} color="#000" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            style={[styles.logoutButton, { marginRight: 10, width: 44, backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}
+            onPress={toggleLanguage}
+          >
+            <ThemedText style={{fontWeight: '800', fontSize: 13, color: '#1d4ed8'}}>
+              {language === 'en' ? 'اردو' : 'EN'}
+            </ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#000" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -185,7 +206,7 @@ export default function HomeScreen() {
       {isLoading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 400 }}>
           <ActivityIndicator size="large" color="#000" />
-          <ThemedText style={{ marginTop: 10 }}>Loading dashboard...</ThemedText>
+          <ThemedText style={{ marginTop: 10 }}>{t.loadingDashboard || 'Loading...'}</ThemedText>
         </View>
       ) : (
         <>
@@ -218,13 +239,13 @@ export default function HomeScreen() {
                 }}
               >
                 <ThemedText style={styles.overdueTitle}>
-                   {userRole === 'customer' ? 'Recent History' : 'Overdue Alerts'}
+                   {userRole === 'customer' ? t.historyTitle : t.alertsTitle}
                 </ThemedText>
                 <Pressable onPress={() => router.push("/(tabs)/customers")}>
                   <ThemedText
                     style={{ color: "#3b82f6", fontWeight: "700", fontSize: 13 }}
                   >
-                    View All
+                    {t.viewAll}
                   </ThemedText>
                 </Pressable>
               </View>
@@ -239,19 +260,19 @@ export default function HomeScreen() {
                   </View>
                   <ThemedText style={styles.overdueText}>
                     {userRole === 'customer' 
-                      ? `${item.days} • ${item.route}` 
-                      : `${item.days} • ${item.route || 'N/A'}, Morning`}
+                      ? `${t.overdue} • ${item.route}` 
+                      : `${t.overdue} • ${item.route || t.na}, ${t.morning}`}
                   </ThemedText>
                 </ThemedView>
               ))}
             </ThemedView>
           ) : (
-            <View style={styles.pausedCard}>
+             <View style={styles.pausedCard}>
               <ThemedText style={styles.pausedTitle}>
-                 {userRole === 'customer' ? 'No Recent Deliveries' : 'No Overdue Payments'}
+                 {userRole === 'customer' ? t.noRecent : t.noOverdue}
               </ThemedText>
               <ThemedText style={styles.pausedDesc}>
-                 {userRole === 'customer' ? 'Your history will appear here once confirmed.' : 'All your customers are up to date! Good job.'}
+                 {userRole === 'customer' ? t.noRecentDesc : t.noOverdueDesc}
               </ThemedText>
             </View>
           )}

@@ -7,7 +7,7 @@
  * - Physical Device: Use your computer's local IP (e.g., http://192.168.1.10:8000/api)
  */
 
-export const BASE_URL = 'https://rasad-production.up.railway.app/api';
+export const BASE_URL = 'https://rasad-production-a567.up.railway.app/api';
 
 export const ENDPOINTS = {
   LOGIN: `${BASE_URL}/accounts/login/`,
@@ -31,6 +31,7 @@ export const ENDPOINTS = {
   INVITATION_SIGNUP: `${BASE_URL}/accounts/invitations/signup/`,
   INVITATION_VALIDATE: (token: string) => `${BASE_URL}/accounts/invitations/validate/${token}/`,
   DRIVERS: `${BASE_URL}/accounts/staff/`,
+  DRIVERS_LIST: `${BASE_URL}/accounts/staff/?role=driver`,
   PAYMENTS_LIST: `${BASE_URL}/accounts/payments/list/`,
   PAYMENT_CREATE: `${BASE_URL}/accounts/payments/report/`,
   PAYMENT_CONFIRM: (id: number) => `${BASE_URL}/accounts/payments/confirm/${id}/`,

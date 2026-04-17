@@ -2,9 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BASE_URL, ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 interface DriverProfile {
   full_name: string;
@@ -23,6 +24,8 @@ interface Delivery {
   quantity: string;
   status: 'pending' | 'delivered' | 'cancelled' | 'paused';
   total_amount: string;
+  customer_latitude?: number | string;
+  customer_longitude?: number | string;
 }
 
 interface AdjustmentRequest {
@@ -37,6 +40,7 @@ interface AdjustmentRequest {
 
 export default function DriverHome() {
   const router = useRouter();
+  const { language, toggleLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<DriverProfile | null>(null);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [adjustments, setAdjustments] = useState<AdjustmentRequest[]>([]);
@@ -212,6 +216,34 @@ export default function DriverHome() {
     }
   };
 
+  const handleStartNavigation = () => {
+    const pending = deliveries.filter(d => d.status === 'pending');
+    if (pending.length === 0) {
+      Alert.alert("No Pending Deliveries", "There are no pending deliveries to navigate to.");
+      return;
+    }
+
+    const getCoordinateStr = (d: Delivery) => {
+      if (d.customer_latitude && d.customer_longitude) {
+        return `${d.customer_latitude},${d.customer_longitude}`;
+      }
+      return encodeURIComponent(`${d.customer_house_no} ${d.customer_street} ${d.customer_area}`);
+    };
+
+    const destination = getCoordinateStr(pending[pending.length - 1]);
+    let mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+
+    if (pending.length > 1) {
+      const waypoints = pending.slice(0, -1).map(getCoordinateStr).join('|');
+      mapUrl += `&waypoints=${waypoints}`;
+    }
+
+    Linking.openURL(mapUrl).catch(err => {
+      console.error("Could not open Google Maps", err);
+      Alert.alert("Error", "Could not open Google Maps. Please ensure it is installed.");
+    });
+  };
+
   const doneCount = stats.delivered_count || deliveries.filter(d => d.status === 'delivered').length;
   const leftCount = stats.pending_count || deliveries.filter(d => d.status === 'pending').length;
   const cashCollected = stats.today_collection;
@@ -248,23 +280,31 @@ export default function DriverHome() {
         <View style={styles.whiteHeader}>
           <View style={styles.headerTop}>
             <View style={styles.driverInfo}>
-              <Text style={styles.greetingUrdu}>السلام علیکم</Text>
+              <Text style={styles.greetingUrdu}>{t.assalamuAlaikum}</Text>
               <Text style={styles.driverName}>
-                {profile?.full_name || profile?.first_name || profile?.username || "Driver"}
+                {profile?.full_name || profile?.first_name || profile?.username || t.drivers}
               </Text>
               <Text style={styles.routeDetailsLabel}>
-                {profile?.route_name || profile?.route || "Default Route"} • {deliveries.length} STOPS
+                {profile?.route_name || profile?.route || "Default Route"} • {deliveries.length} {t.stops}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={async () => {
-                await SecureStore.deleteItemAsync('userToken');
-                router.replace("/login");
-              }}
-            >
-              <Ionicons name="log-out-outline" size={20} color="#000" />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.actionIconButton}
+                onPress={toggleLanguage}
+              >
+                <Text style={styles.languageText}>{language === 'en' ? 'UR' : 'EN'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={async () => {
+                  await SecureStore.deleteItemAsync('userToken');
+                  router.replace("/login");
+                }}
+              >
+                <Ionicons name="log-out-outline" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -272,19 +312,19 @@ export default function DriverHome() {
         <View style={styles.darkStatsContainer}>
           <View style={styles.statCard}>
             <Text style={[styles.statValue, { color: '#10b981' }]}>{stats.delivered_count || 0}</Text>
-            <Text style={styles.statLabel}>DONE</Text>
+            <Text style={styles.statLabel}>{t.doneCaps}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statCard}>
             <Text style={[styles.statValue, { color: '#ffffff' }]}>{stats.pending_count || 0}</Text>
-            <Text style={styles.statLabel}>LEFT</Text>
+            <Text style={styles.statLabel}>{t.leftCaps}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statCard}>
             <Text style={[styles.statValue, { color: '#f59e0b' }]}>
               {formatCash(stats.today_collection || 0)}
             </Text>
-            <Text style={styles.statLabel}>CASH</Text>
+            <Text style={styles.statLabel}>{t.cashCaps}</Text>
           </View>
         </View>
 
@@ -292,15 +332,15 @@ export default function DriverHome() {
         <View style={styles.listContainer}>
           <View style={styles.sectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>TODAY'S DELIVERY QUEUE</Text>
-              <Text style={styles.sectionUrdu}>آج کی ترتیبی فہرست</Text>
+              <Text style={styles.sectionTitle}>{t.deliveryQueue}</Text>
+              <Text style={styles.sectionUrdu}>{t.deliveryQueueUrdu}</Text>
             </View>
             <TouchableOpacity 
-              style={styles.sequenceBtn}
-              onPress={() => router.push("/(driver)/route")}
+              style={styles.navigationBtn}
+              onPress={handleStartNavigation}
             >
-              <Ionicons name="swap-vertical" size={18} color="#6b7280" />
-              <Text style={styles.sequenceBtnText}>Sequence</Text>
+              <Ionicons name="navigate-circle" size={18} color="#3b82f6" />
+              <Text style={styles.navigationBtnText}>{t.navigation}</Text>
             </TouchableOpacity>
           </View>
 
@@ -309,8 +349,8 @@ export default function DriverHome() {
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="happy-outline" size={32} color="#94a3b8" />
               </View>
-              <Text style={styles.emptyTitle}>Route is empty!</Text>
-              <Text style={styles.emptySubtitle}>No assignments for today.</Text>
+              <Text style={styles.emptyTitle}>{t.routeEmpty}</Text>
+              <Text style={styles.emptySubtitle}>{t.noAssignments}</Text>
             </View>
           ) : (
             deliveries.map((item, index) => {
@@ -370,7 +410,7 @@ export default function DriverHome() {
                       </View>
                     ) : (
                       <View style={styles.waitingBadge}>
-                         <Text style={styles.waitingText}>Wait</Text>
+                         <Text style={styles.waitingText}>{t.wait}</Text>
                       </View>
                     )}
                   </View>
@@ -393,8 +433,8 @@ export default function DriverHome() {
             <View style={styles.modalIconBg}>
               <Ionicons name="water" size={32} color="#000" />
             </View>
-            <Text style={styles.premiumModalTitle}>Update Quantity</Text>
-            <Text style={styles.modalUrduTitle}>مقدار تبدیل کریں</Text>
+            <Text style={styles.premiumModalTitle}>{t.updateQuantity}</Text>
+            <Text style={styles.modalUrduTitle}>{t.updateQuantityUrdu}</Text>
 
             <View style={styles.inputWrapper}>
               <TextInput
@@ -405,15 +445,15 @@ export default function DriverHome() {
                 autoFocus
                 selectTextOnFocus
               />
-              <Text style={styles.inputUnitLabel}>Liters</Text>
+              <Text style={styles.inputUnitLabel}>{t.liters}</Text>
             </View>
 
             <View style={styles.modalFooter}>
               <TouchableOpacity style={styles.pCancelBtn} onPress={() => setEditingId(null)}>
-                <Text style={styles.pCancelBtnText}>Cancel</Text>
+                <Text style={styles.pCancelBtnText}>{t.cancel}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.pSaveBtn} onPress={() => handleUpdateQuantity(editingId!)}>
-                <Text style={styles.pSaveBtnText}>Save Changes</Text>
+                <Text style={styles.pSaveBtnText}>{t.save}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -441,6 +481,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  languageText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#3b82f6',
   },
   driverInfo: {
     flex: 1,
@@ -533,21 +593,21 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontWeight: '500',
   },
-  sequenceBtn: {
+  navigationBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#eff6ff', // Light blue background
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#dbeafe',
   },
-  sequenceBtnText: {
+  navigationBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6b7280',
+    color: '#3b82f6',
   },
   deliveryCard: {
     backgroundColor: '#ffffff',

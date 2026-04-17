@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 // Generate dates for picker
 const getNext30Days = () => {
@@ -35,6 +36,7 @@ const reasonOptions = ["Traveling / سفر", "Not needed / ضرورت نہیں",
 
 export default function PauseDelivery() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [startDate, setStartDate] = useState(dateOptions[1].value); // Default tomorrow
   const [endDate, setEndDate] = useState(dateOptions[2].value);
   const [reason, setReason] = useState(reasonOptions[0]);
@@ -152,8 +154,8 @@ export default function PauseDelivery() {
             <View style={styles.iconContainer}>
               <Ionicons name="pause" size={40} color="#2563eb" />
             </View>
-            <Text style={styles.title}>Pause Delivery</Text>
-            <Text style={styles.urduTitle}>ترسیل عارضی روکیں</Text>
+            <Text style={styles.title}>{t.pause}</Text>
+            <Text style={styles.urduTitle}>{t.pauseUrdu}</Text>
           </View>
 
           <View style={styles.form}>
@@ -206,7 +208,7 @@ export default function PauseDelivery() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Confirm pause</Text>
+            <Text style={styles.confirmButtonText}>{t.confirm}</Text>
           )}
         </TouchableOpacity>
       </View>

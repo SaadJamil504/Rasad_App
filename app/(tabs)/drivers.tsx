@@ -17,8 +17,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS, BASE_URL } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function DriversScreen() {
+    const { t } = useLanguage();
     const router = useRouter();
     const [drivers, setDrivers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function DriversScreen() {
             if (!token) return;
 
             // Fetch absolute staff and filter in frontend consistent with routes.tsx
-            const response = await fetch(`${ENDPOINTS.DRIVERS}?t=${Date.now()}`, {
+            const response = await fetch(`${ENDPOINTS.DRIVERS_LIST}&t=${Date.now()}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
@@ -86,7 +88,7 @@ export default function DriversScreen() {
     };
 
     const renderDriverCard = ({ item }: { item: any }) => {
-        const name = item.first_name || item.full_name || item.username || "Unknown";
+        const name = item.first_name || item.full_name || item.username || t.unknown;
         const initial = name.charAt(0).toUpperCase();
 
         return (
@@ -104,7 +106,7 @@ export default function DriversScreen() {
 
                 <View style={styles.cardRight}>
                     <View style={styles.statusBadge}>
-                        <ThemedText style={styles.statusTabText}>Active</ThemedText>
+                        <ThemedText style={styles.statusTabText}>{t.active}</ThemedText>
                     </View>
                 </View>
             </ThemedView>
@@ -116,15 +118,15 @@ export default function DriversScreen() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View>
-                        <ThemedText style={styles.title}>Drivers</ThemedText>
-                        <ThemedText style={styles.subtitle}>ڈرائیورز کی فہرست</ThemedText>
+                        <ThemedText style={styles.title}>{t.drivers}</ThemedText>
+                        <ThemedText style={styles.subtitle}>{t.allDrivers}</ThemedText>
                     </View>
                     <TouchableOpacity 
                         style={styles.addButton} 
                         onPress={() => router.push("/(tabs)/add-driver")}
                     >
                         <Ionicons name="add" size={22} color="#fff" />
-                        <ThemedText style={styles.addButtonText}>Add New</ThemedText>
+                        <ThemedText style={styles.addButtonText}>{t.addDriver}</ThemedText>
                     </TouchableOpacity>
                 </View>
 
@@ -132,7 +134,7 @@ export default function DriversScreen() {
                     <View style={styles.searchContainer}>
                         <Ionicons name="search-outline" size={20} color="#94a3b8" />
                         <TextInput
-                            placeholder="Search driver name..."
+                            placeholder={t.search}
                             style={styles.searchInput}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
@@ -148,7 +150,7 @@ export default function DriversScreen() {
                     refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchDrivers} />}
                     ListEmptyComponent={
                         <View style={styles.empty}>
-                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>No drivers found</ThemedText>}
+                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>{t.noDriversFound}</ThemedText>}
                         </View>
                     }
                 />

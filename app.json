@@ -27,7 +27,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "rasad-production.up.railway.app",
+              "host": "rasad-production-a567.up.railway.app",
               "pathPrefix": "/customer-signup"
             }
           ],

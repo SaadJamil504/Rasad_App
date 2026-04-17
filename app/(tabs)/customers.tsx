@@ -18,8 +18,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function CustomersScreen() {
+    const { t } = useLanguage();
     const router = useRouter();
     const [customers, setCustomers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -78,8 +80,8 @@ export default function CustomersScreen() {
 
     const getStatusInfo = (customer: any) => {
         const balance = parseFloat(customer.outstanding_balance || 0);
-        if (balance > 0) return { label: "Overdue", color: "#ef4444", bg: "#fee2e2" };
-        return { label: "Active", color: "#3b82f6", bg: "#dbeafe" };
+        if (balance > 0) return { label: t.overdue, color: "#ef4444", bg: "#fee2e2" };
+        return { label: t.active, color: "#3b82f6", bg: "#dbeafe" };
     };
 
     const getInitialColor = (name: string) => {
@@ -138,15 +140,15 @@ export default function CustomersScreen() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View>
-                        <ThemedText style={styles.title}>Customers</ThemedText>
-                        <ThemedText style={styles.subtitle}>صارفین کی فہرست</ThemedText>
+                        <ThemedText style={styles.title}>{t.customers}</ThemedText>
+                        <ThemedText style={styles.subtitle}>{t.allCustomers}</ThemedText>
                     </View>
                     <TouchableOpacity 
                         style={styles.addButton} 
                         onPress={() => router.push("/(tabs)/add-customer")}
                     >
                         <Ionicons name="add" size={22} color="#fff" />
-                        <ThemedText style={styles.addButtonText}>Add New</ThemedText>
+                        <ThemedText style={styles.addButtonText}>{t.addCustomer}</ThemedText>
                     </TouchableOpacity>
                 </View>
 
@@ -154,7 +156,7 @@ export default function CustomersScreen() {
                     <View style={styles.searchContainer}>
                         <Ionicons name="search-outline" size={20} color="#94a3b8" />
                         <TextInput
-                            placeholder="Search name or reg no..."
+                            placeholder={t.search}
                             style={styles.searchInput}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
@@ -170,7 +172,7 @@ export default function CustomersScreen() {
                             style={[styles.filterTab, activeFilter === f && styles.activeFilterTab]}
                         >
                             <ThemedText style={[styles.filterTabText, activeFilter === f && styles.activeFilterText]}>
-                                {f}
+                                {f === 'All' ? t.allCustomers : (f === 'Active' ? t.active : t.overdue)}
                             </ThemedText>
                         </Pressable>
                     ))}
@@ -184,7 +186,7 @@ export default function CustomersScreen() {
                     refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchCustomers} />}
                     ListEmptyComponent={
                         <View style={styles.empty}>
-                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>No customers found</ThemedText>}
+                            {isLoading ? <ActivityIndicator color="#111827" /> : <ThemedText>{t.noCustomersFound}</ThemedText>}
                         </View>
                     }
                 />

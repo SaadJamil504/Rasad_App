@@ -20,8 +20,10 @@ import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from "expo-router";
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function RoutesScreen() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [routesData, setRoutesData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,7 +75,7 @@ export default function RoutesScreen() {
   const fetchDrivers = async () => {
     try {
       const token = await SecureStore.getItemAsync('userToken');
-      const response = await fetch(ENDPOINTS.DRIVERS as string, {
+      const response = await fetch(ENDPOINTS.DRIVERS_LIST as string, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await response.json();
@@ -183,15 +185,15 @@ export default function RoutesScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
       <View style={styles.header}>
         <View>
-          <ThemedText style={styles.title}>Routes</ThemedText>
-          <ThemedText style={styles.subtitle}>ڈیلیوری کے راستے</ThemedText>
+          <ThemedText style={styles.title}>{t.routes}</ThemedText>
+          <ThemedText style={styles.subtitle}>{t.manageDeliveries}</ThemedText>
         </View>
         <TouchableOpacity 
           style={styles.addButton}
           onPress={openAddRoute}
         >
           <Ionicons name="add" size={22} color="#FFF" />
-          <ThemedText style={styles.addButtonText}>Add New</ThemedText>
+          <ThemedText style={styles.addButtonText}>{t.createRoute}</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -207,19 +209,19 @@ export default function RoutesScreen() {
         <View style={styles.quickStats}>
           <ThemedView style={styles.statBox}>
             <ThemedText style={styles.statNumber}>{routesData.length}</ThemedText>
-            <ThemedText style={styles.statLabel}>Total Routes</ThemedText>
+            <ThemedText style={styles.statLabel}>{t.totalRoutes}</ThemedText>
           </ThemedView>
           <ThemedView style={styles.statBox}>
             <ThemedText style={styles.statNumber}>
               {routesData.filter(r => !r.driver_name).length}
             </ThemedText>
-            <ThemedText style={styles.statLabel}>Unassigned</ThemedText>
+            <ThemedText style={styles.statLabel}>{t.unassigned}</ThemedText>
           </ThemedView>
         </View>
 
         {/* Routes List */}
         <ThemedView style={styles.listCard}>
-          <ThemedText style={styles.sectionHeader}>Active Delivery Plans</ThemedText>
+          <ThemedText style={styles.sectionHeader}>{t.activePlans}</ThemedText>
           {isLoading ? (
             <ActivityIndicator size="large" color="#111827" style={{ marginVertical: 40 }} />
           ) : routesData.length > 0 ? (
@@ -230,19 +232,19 @@ export default function RoutesScreen() {
                   <View style={{ flex: 1 }}>
                     <ThemedText type="defaultSemiBold" style={styles.routeNameText}>{route.name}</ThemedText>
                     <ThemedText style={styles.routeMetaText}>
-                      Driver: {route.driver_name || "NOT ASSIGNED"}
+                      {t.routeDriver} {route.driver_name || t.notAssigned}
                     </ThemedText>
                   </View>
                   <TouchableOpacity onPress={() => openEditRoute(route)} style={styles.editBtn}>
                     <Ionicons name="create-outline" size={20} color="#3b82f6" />
-                    <ThemedText style={{ color: "#3b82f6", fontWeight: "700", marginLeft: 4 }}>Edit</ThemedText>
+                    <ThemedText style={{ color: "#3b82f6", fontWeight: "700", marginLeft: 4 }}>{t.edit}</ThemedText>
                   </TouchableOpacity>
                 </View>
 
                 {route.customer_details ? (
                   <View style={{ marginBottom: 12, backgroundColor: "#f8fafc", padding: 10, borderRadius: 10 }}>
                     <ThemedText style={{ fontSize: 13, color: "#475569", fontWeight: "600", lineHeight: 20 }}>
-                      <Ionicons name="people" size={12} color="#475569" /> Customers: {Array.isArray(route.customer_details) ? route.customer_details.map((c: any) => typeof c === 'object' ? (c.first_name || c.name || c.username || c.full_name || '') : c).join(", ") : String(route.customer_details || "")}
+                      <Ionicons name="people" size={12} color="#475569" /> {t.customers}: {Array.isArray(route.customer_details) ? route.customer_details.map((c: any) => typeof c === 'object' ? (c.first_name || c.name || c.username || c.full_name || '') : c).join(", ") : String(route.customer_details || "")}
                     </ThemedText>
                   </View>
                 ) : null}
@@ -250,11 +252,11 @@ export default function RoutesScreen() {
                 <View style={styles.routeFooter}>
                    <View style={styles.footerStat}>
                       <Ionicons name="people-outline" size={14} color="#6b7280" />
-                      <ThemedText style={styles.footerStatText}>{route.customer_count || 0} Customers</ThemedText>
+                      <ThemedText style={styles.footerStatText}>{route.customer_count || 0} {t.customersCount}</ThemedText>
                    </View>
                    <View style={styles.footerStat}>
                       <Ionicons name="water-outline" size={14} color="#6b7280" />
-                      <ThemedText style={styles.footerStatText}>{route.total_quantity || 0}L Milk</ThemedText>
+                      <ThemedText style={styles.footerStatText}>{route.total_quantity || 0}{t.milkLiters}</ThemedText>
                    </View>
                 </View>
               </ThemedView>
@@ -263,7 +265,7 @@ export default function RoutesScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="map-outline" size={48} color="#d1d5db" />
-              <ThemedText style={styles.emptyText}>No routes found</ThemedText>
+              <ThemedText style={styles.emptyText}>{t.noRoutes}</ThemedText>
             </View>
           )}
         </ThemedView>
@@ -276,15 +278,14 @@ export default function RoutesScreen() {
             <Pressable onPress={() => setAddRouteVisible(false)}>
               <Ionicons name="close" size={28} color="#111827" />
             </Pressable>
-            <ThemedText style={styles.modalTitle}>New Delivery Route</ThemedText>
+            <ThemedText style={styles.modalTitle}>{t.newRoute}</ThemedText>
             <View style={{ width: 28 }} />
           </View>
 
           <ScrollView contentContainerStyle={styles.modalBody}>
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <ThemedText style={styles.inputLabel}>Route Identity</ThemedText>
-                <ThemedText style={styles.urduLabel}>راستہ کا نام</ThemedText>
+                <ThemedText style={styles.inputLabel}>{t.routeIdentity}</ThemedText>
               </View>
               <TextInput
                 value={newRouteName}
@@ -296,15 +297,14 @@ export default function RoutesScreen() {
 
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <ThemedText style={styles.inputLabel}>Assign Driver</ThemedText>
-                <ThemedText style={styles.urduLabel}>ڈرائیور منتخب کریں</ThemedText>
+                <ThemedText style={styles.inputLabel}>{t.assignDriver}</ThemedText>
               </View>
               <TouchableOpacity 
                 style={styles.dropdownSelector}
                 onPress={() => setDriverPickerVisible(true)}
               >
                 <ThemedText style={styles.dropdownValue}>
-                  {selectedDriver ? (selectedDriver.first_name || selectedDriver.full_name || selectedDriver.username || "Driver ID " + selectedDriver.id) : "Choose a driver..."}
+                  {selectedDriver ? (selectedDriver.first_name || selectedDriver.full_name || selectedDriver.username || "Driver ID " + selectedDriver.id) : t.chooseDriver}
                 </ThemedText>
                 <Ionicons name="chevron-down" size={20} color="#666" />
               </TouchableOpacity>
@@ -312,8 +312,7 @@ export default function RoutesScreen() {
 
             <View style={styles.customerSection}>
                <View style={styles.labelRow}>
-                  <ThemedText style={styles.inputLabel}>Select Customers</ThemedText>
-                  <ThemedText style={styles.urduLabel}>گاہک منتخب کریں</ThemedText>
+                  <ThemedText style={styles.inputLabel}>{t.selectCustomers}</ThemedText>
                </View>
                <View style={styles.customerListContainer}>
                   {availableCustomers.map(c => (
@@ -325,7 +324,7 @@ export default function RoutesScreen() {
                       <View style={{ flex: 1 }}>
                         <ThemedText style={[styles.custName, selectedCustomerIds.includes(c.id) && styles.custNameActive]}>{c.first_name || c.full_name || c.username}</ThemedText>
                         <ThemedText style={styles.custSub}>
-                           {c.house_no ? `${c.house_no}, ` : ''}{c.street ? `${c.street}, ` : ''}{c.area || c.city || c.phone_number} • {c.route_name || 'No current route'}
+                           {c.house_no ? `${c.house_no}, ` : ''}{c.street ? `${c.street}, ` : ''}{c.area || c.city || c.phone_number} • {c.route_name || t.noCurrentRoute}
                         </ThemedText>
                       </View>
                       {selectedCustomerIds.includes(c.id) && (
@@ -341,14 +340,14 @@ export default function RoutesScreen() {
                 style={styles.confirmButton}
                 onPress={handleCreateOrUpdateRoute}
                >
-                  <ThemedText style={styles.confirmButtonText}>{editingRouteId ? "Save Changes" : "Confirm & Create"}</ThemedText>
+                  <ThemedText style={styles.confirmButtonText}>{editingRouteId ? t.saveChanges : t.confirmCreate}</ThemedText>
                </TouchableOpacity>
 
                <TouchableOpacity 
                 style={styles.cancelButton}
                 onPress={() => setAddRouteVisible(false)}
                >
-                  <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                  <ThemedText style={styles.cancelButtonText}>{t.cancel}</ThemedText>
                </TouchableOpacity>
             </View>
           </ScrollView>
@@ -360,7 +359,7 @@ export default function RoutesScreen() {
       <Modal visible={driverPickerVisible} transparent animationType="fade">
         <View style={styles.pickerOverlay}>
           <ThemedView style={styles.pickerContent}>
-            <ThemedText style={styles.pickerTitle}>Select available driver</ThemedText>
+            <ThemedText style={styles.pickerTitle}>{t.selectAvailableDriver}</ThemedText>
             {availableDrivers.map((d: any) => (
               <Pressable key={d.id} style={styles.pickerItem} onPress={() => { setSelectedDriver(d); setDriverPickerVisible(false); }}>
                 <ThemedText style={styles.pickerItemText}>{d.first_name || d.full_name || d.username}</ThemedText>
@@ -368,7 +367,7 @@ export default function RoutesScreen() {
               </Pressable>
             ))}
             <Pressable style={styles.pickerClose} onPress={() => setDriverPickerVisible(false)}>
-              <ThemedText style={styles.pickerCloseText}>Cancel</ThemedText>
+              <ThemedText style={styles.pickerCloseText}>{t.cancel}</ThemedText>
             </Pressable>
           </ThemedView>
         </View>

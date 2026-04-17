@@ -15,15 +15,16 @@ import {
     RefreshControl,
     LayoutAnimation,
     Platform,
-    UIManager
+    UIManager,
+    SafeAreaView
 } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
-
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function PaymentsScreen() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -176,8 +177,8 @@ export default function PaymentsScreen() {
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
                 <View>
-                    <ThemedText style={styles.title}>Payments</ThemedText>
-                    <ThemedText style={styles.subtitle}>ادائیگیوں کا ریکارڑ</ThemedText>
+                    <ThemedText style={styles.title}>{t.payments}</ThemedText>
+                    <ThemedText style={styles.subtitle}>{t.ledger}</ThemedText>
                 </View>
             </View>
 
@@ -186,13 +187,13 @@ export default function PaymentsScreen() {
           style={[styles.tab, activeTab === "new" && styles.activeTab]}
           onPress={() => setActiveTab("new")}
         >
-          <ThemedText style={[styles.tabText, activeTab === "new" && styles.activeTabText]}>Log New Payment</ThemedText>
+          <ThemedText style={[styles.tabText, activeTab === "new" && styles.activeTabText]}>{t.logPayment}</ThemedText>
         </Pressable>
         <Pressable 
           style={[styles.tab, activeTab === "history" && styles.activeTab]}
           onPress={() => setActiveTab("history")}
         >
-          <ThemedText style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>Record History</ThemedText>
+          <ThemedText style={[styles.tabText, activeTab === "history" && styles.activeTabText]}>{t.recordHistory}</ThemedText>
         </Pressable>
       </View>
 
@@ -205,13 +206,13 @@ export default function PaymentsScreen() {
           }
         >
           <ThemedView style={styles.formCard}>
-            <ThemedText style={styles.formTitle}>Record New Payment</ThemedText>
+            <ThemedText style={styles.formTitle}>{t.logPayment}</ThemedText>
             
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>CUSTOMER</ThemedText>
+              <ThemedText style={styles.label}>{t.customerLabel}</ThemedText>
               <Pressable style={styles.selector} onPress={togglePicker}>
                 <ThemedText style={{ color: selectedCustomer ? "#111827" : "#94a3b8", fontWeight: "700" }}>
-                  {selectedCustomer ? (selectedCustomer.first_name || selectedCustomer.username) : "Select customer..."}
+                  {selectedCustomer ? (selectedCustomer.first_name || selectedCustomer.username) : t.selectCustomer}
                 </ThemedText>
                 <Ionicons name={showCustPicker ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
               </Pressable>
@@ -236,7 +237,7 @@ export default function PaymentsScreen() {
                              }}
                            >
                              <ThemedText style={{ fontWeight: "700", color: "#1e293b" }}>{item.first_name || item.username}</ThemedText>
-                             <ThemedText style={{ fontSize: 11, color: "#94a3b8" }}>Bal: Rs {parseFloat(item.outstanding_balance || 0).toLocaleString()}</ThemedText>
+                             <ThemedText style={{ fontSize: 11, color: "#94a3b8" }}>{t.balanceParam} Rs {parseFloat(item.outstanding_balance || 0).toLocaleString()}</ThemedText>
                            </Pressable>
                         ))}
                      </ScrollView>
@@ -246,7 +247,7 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>PENDING AMOUNT</ThemedText>
+              <ThemedText style={styles.label}>{t.pendingAmount}</ThemedText>
               <View style={[styles.currencyInputWrap, { backgroundColor: "#f8fafc" }]}>
                  <ThemedText style={[styles.currencyPrefix, { color: "#ef4444" }]}>Rs</ThemedText>
                  <ThemedText style={[styles.readonlyValue, { color: "#ef4444" }]}>
@@ -256,7 +257,7 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>AMOUNT COLLECTED</ThemedText>
+              <ThemedText style={styles.label}>{t.amountCollected}</ThemedText>
               <View style={styles.currencyInputWrap}>
                  <ThemedText style={styles.currencyPrefix}>Rs</ThemedText>
                  <TextInput
@@ -270,7 +271,7 @@ export default function PaymentsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>PAYMENT METHOD</ThemedText>
+              <ThemedText style={styles.label}>{t.paymentMethod}</ThemedText>
               <Pressable style={styles.selector} onPress={toggleMethodPicker}>
                 <ThemedText style={{ color: "#111827", fontWeight: "700" }}>{method}</ThemedText>
                 <Ionicons name={showMethodPicker ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
@@ -311,7 +312,7 @@ export default function PaymentsScreen() {
               onPress={handleCreatePayment}
               disabled={isLoading}
             >
-              <ThemedText style={styles.saveBtnText}>Record Payment</ThemedText>
+              <ThemedText style={styles.saveBtnText}>{t.recordPaymentButton}</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         </ScrollView>
@@ -326,24 +327,24 @@ export default function PaymentsScreen() {
               <ThemedView key={p.id} style={styles.paymentCard}>
                 <View style={styles.payTop}>
                   <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.customerName}>{p.customer_name || 'Customer'}</ThemedText>
-                    <ThemedText style={styles.dateText}>{p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Today'}</ThemedText>
+                    <ThemedText style={styles.customerName}>{p.customer_name || t.unknown}</ThemedText>
+                    <ThemedText style={styles.dateText}>{p.created_at ? new Date(p.created_at).toLocaleDateString() : t.today}</ThemedText>
                   </View>
                   <ThemedText style={[styles.payAmount, { color: p.status === 'confirmed' ? '#059669' : '#92400e' }]}>Rs {p.amount}</ThemedText>
                 </View>
                 <View style={styles.payFooter}>
                   <View style={[styles.statusBadge, p.status === "confirmed" ? styles.bgConfirmed : styles.bgPending]}>
                      <ThemedText style={[styles.statusText, p.status === "confirmed" ? styles.txtConfirmed : styles.txtPending]}>
-                       {(p.status || 'PENDING').toUpperCase()}
+                       {p.status === "confirmed" ? t.verified : (p.status === "pending" ? t.pending : p.status.toUpperCase())}
                      </ThemedText>
                   </View>
                   {p.status === "pending" && (
                     <View style={{ flexDirection: "row", gap: 10 }}>
                       <TouchableOpacity style={[styles.confirmBtnSmall, { backgroundColor: "#ef4444" }]} onPress={() => handleRejectPayment(p.id)}>
-                        <ThemedText style={styles.confirmBtnSmallText}>Reject</ThemedText>
+                        <ThemedText style={styles.confirmBtnSmallText}>{t.reject}</ThemedText>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.confirmBtnSmall} onPress={() => handleConfirmPayment(p.id)}>
-                        <ThemedText style={styles.confirmBtnSmallText}>Confirm</ThemedText>
+                        <ThemedText style={styles.confirmBtnSmallText}>{t.confirm}</ThemedText>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -357,7 +358,7 @@ export default function PaymentsScreen() {
               ) : (
                 <>
                   <Ionicons name="receipt-outline" size={48} color="#d1d5db" />
-                  <ThemedText style={{ color: "#9ca3af", marginTop: 10 }}>No recordings found</ThemedText>
+                  <ThemedText style={{ color: "#9ca3af", marginTop: 10 }}>{t.noPayments}</ThemedText>
                 </>
               )}
             </View>
@@ -371,6 +372,9 @@ export default function PaymentsScreen() {
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: "#ffffff" },
     header: { 
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        alignItems: "flex-start", 
         paddingHorizontal: 24, 
         paddingTop: 24, 
         marginBottom: 32 

@@ -96,6 +96,8 @@ export default function LoginScreen() {
   };
 
   const handleBypassLogin = async () => {
+    setPhoneNumber("03010779759");
+    setPassword("saad1234");
     setIsLoading(true);
     try {
       const response = await fetch(`${BASE_URL}/accounts/login/`, {

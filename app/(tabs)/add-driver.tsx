@@ -18,8 +18,10 @@ import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import * as Clipboard from 'expo-clipboard';
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function AddDriverScreen() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [activeMode, setActiveMode] = useState<"manual" | "invite">("manual");
   const [isLoading, setIsLoading] = useState(false);
@@ -123,8 +125,8 @@ export default function AddDriverScreen() {
             <Ionicons name="arrow-back" size={24} color="#111827" />
           </Pressable>
           <View>
-            <ThemedText style={styles.title}>Add Driver</ThemedText>
-            <ThemedText style={styles.urduHeader}>نیا ڈرائیور شامل کریں</ThemedText>
+            <ThemedText style={styles.title}>{t.addDriverTitle}</ThemedText>
+            {/* Keeping urduHeader removed as we toggle strings directly */}
           </View>
         </View>
 
@@ -133,30 +135,30 @@ export default function AddDriverScreen() {
             onPress={() => setActiveMode("manual")}
             style={[styles.tab, activeMode === "manual" && styles.activeTab]}
           >
-            <ThemedText style={[styles.tabText, activeMode === "manual" && styles.activeTabText]}>Manual Form</ThemedText>
+            <ThemedText style={[styles.tabText, activeMode === "manual" && styles.activeTabText]}>{t.manualForm}</ThemedText>
           </Pressable>
           <Pressable 
             onPress={() => setActiveMode("invite")}
             style={[styles.tab, activeMode === "invite" && styles.activeTab]}
           >
-            <ThemedText style={[styles.tabText, activeMode === "invite" && styles.activeTabText]}>Send Link</ThemedText>
+            <ThemedText style={[styles.tabText, activeMode === "invite" && styles.activeTabText]}>{t.sendLink}</ThemedText>
           </Pressable>
         </View>
 
         {activeMode === "manual" ? (
           <ThemedView style={styles.card}>
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>FULL NAME</ThemedText>
+              <ThemedText style={[styles.label, { textTransform: 'uppercase' }]}>{t.fullName}</ThemedText>
               <TextInput placeholder="Enter driver name" value={name} onChangeText={setName} style={styles.input} />
             </View>
 
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>PHONE NUMBER</ThemedText>
+              <ThemedText style={[styles.label, { textTransform: 'uppercase' }]}>{t.phoneNumber}</ThemedText>
               <TextInput placeholder="03XXXXXXXXX" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" style={styles.input} maxLength={11} />
             </View>
 
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>LICENSE NUMBER (OPTIONAL)</ThemedText>
+              <ThemedText style={styles.label}>{t.licenseNumber}</ThemedText>
               <TextInput placeholder="ABC-123" value={licenseNumber} onChangeText={setLicenseNumber} style={styles.input} />
             </View>
 
@@ -165,13 +167,13 @@ export default function AddDriverScreen() {
               onPress={handleSaveManual} 
               disabled={isLoading}
             >
-              <ThemedText style={styles.saveBtnText}>Save Driver</ThemedText>
+              <ThemedText style={styles.saveBtnText}>{t.saveDriver}</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         ) : (
           <ThemedView style={styles.card}>
             <ThemedText style={[styles.label, { marginBottom: 12, fontSize: 13, color: "#475569" }]}>
-            Generate a secure link to share with a new delivery driver. They will use this link to set up their app access.
+            {t.secureDriverLinkDesc}
             </ThemedText>
             
             {!generatedToken ? (
@@ -179,23 +181,23 @@ export default function AddDriverScreen() {
                 {isLoading ? (
                 <ActivityIndicator color="#fff" />
                 ) : (
-                <ThemedText style={styles.saveBtnText}>Generate Invite Link</ThemedText>
+                <ThemedText style={styles.saveBtnText}>{t.generateInvite}</ThemedText>
                 )}
             </TouchableOpacity>
             ) : (
             <View style={styles.linkResultContainer}>
-                <ThemedText style={styles.label}>WEB LINK (CLICKABLE IN WHATSAPP)</ThemedText>
-                <ThemedText style={{fontSize: 11, color: '#64748b', marginBottom: 4}}>Redirects to app automatically if backed up to Railway.</ThemedText>
+                <ThemedText style={styles.label}>{t.webLink}</ThemedText>
+                <ThemedText style={{fontSize: 11, color: '#64748b', marginBottom: 4}}></ThemedText>
                 <View style={styles.linkBox}>
                 <ThemedText style={styles.linkText} numberOfLines={1} ellipsizeMode="tail">
-                    https://rasad-production.up.railway.app/driver-signup?token={generatedToken}
+                    https://rasad-production-a567.up.railway.app/driver-signup?token={generatedToken}
                 </ThemedText>
-                <Pressable style={styles.copyIconBtn} onPress={() => handleCopyLink(`https://rasad-production.up.railway.app/driver-signup?token=${generatedToken}`)}>
+                <Pressable style={styles.copyIconBtn} onPress={() => handleCopyLink(`https://rasad-production-a567.up.railway.app/driver-signup?token=${generatedToken}`)}>
                     <Ionicons name="copy-outline" size={20} color="#10b981" />
                 </Pressable>
                 </View>
 
-                <ThemedText style={[styles.label, {marginTop: 6}]}>RAW DEEP LINK (NOT CLICKABLE IN WHATSAPP)</ThemedText>
+                <ThemedText style={[styles.label, {marginTop: 6}]}>{t.rawLink}</ThemedText>
                 <View style={styles.linkBox}>
                 <ThemedText style={styles.linkText} numberOfLines={1} ellipsizeMode="tail">
                     rasadapp://driver-signup?token={generatedToken}
@@ -206,7 +208,7 @@ export default function AddDriverScreen() {
                 </View>
 
                 <TouchableOpacity style={[styles.saveBtn, { backgroundColor: "#f3f4f6", borderWidth: 1, borderColor: "#e2e8f0" }]} onPress={() => setGeneratedToken("")}>
-                <ThemedText style={[styles.saveBtnText, { color: "#111827" }]}>Generate Another</ThemedText>
+                <ThemedText style={[styles.saveBtnText, { color: "#111827" }]}>{t.generateAnother}</ThemedText>
                 </TouchableOpacity>
             </View>
             )}

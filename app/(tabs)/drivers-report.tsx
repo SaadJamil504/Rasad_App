@@ -7,13 +7,14 @@ import {
   Text,
   View,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { ENDPOINTS } from "../../constants/Api";
 import { ThemedText } from "@/components/themed-text";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 interface Report {
   id: number;
@@ -26,6 +27,7 @@ interface Report {
 }
 
 export default function DriversReportScreen() {
+  const { t } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -56,11 +58,11 @@ export default function DriversReportScreen() {
     <View style={styles.reportCard}>
       <View style={styles.reportHeader}>
         <View>
-          <ThemedText style={styles.driverName}>{item.driver_name || "Unknown Driver"}</ThemedText>
+          <ThemedText style={styles.driverName}>{item.driver_name || t.unknownDriver}</ThemedText>
           <ThemedText style={styles.reportDate}>{new Date(item.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</ThemedText>
         </View>
         <View style={styles.statusBadge}>
-          <ThemedText style={styles.statusText}>SUBMITTED</ThemedText>
+          <ThemedText style={styles.statusText}>{t.submitted}</ThemedText>
         </View>
       </View>
 
@@ -70,7 +72,7 @@ export default function DriversReportScreen() {
             <Ionicons name="water" size={16} color="#2563eb" />
           </View>
           <View>
-            <ThemedText style={styles.statLabel}>MILK</ThemedText>
+            <ThemedText style={styles.statLabel}>{t.milkLabel}</ThemedText>
             <ThemedText style={styles.statValue}>{item.total_milk}L</ThemedText>
           </View>
         </View>
@@ -80,7 +82,7 @@ export default function DriversReportScreen() {
             <Ionicons name="cash" size={16} color="#16a34a" />
           </View>
           <View>
-            <ThemedText style={styles.statLabel}>CASH</ThemedText>
+            <ThemedText style={styles.statLabel}>{t.cashLabel}</ThemedText>
             <ThemedText style={styles.statValue}>Rs {parseFloat(item.total_cash).toLocaleString()}</ThemedText>
           </View>
         </View>
@@ -90,7 +92,7 @@ export default function DriversReportScreen() {
             <Ionicons name="people" size={16} color="#9333ea" />
           </View>
           <View>
-            <ThemedText style={styles.statLabel}>STOPS</ThemedText>
+            <ThemedText style={styles.statLabel}>{t.stopsLabel}</ThemedText>
             <ThemedText style={styles.statValue}>{item.customers_served}</ThemedText>
           </View>
         </View>
@@ -109,8 +111,8 @@ export default function DriversReportScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <ThemedText style={styles.title}>Reports</ThemedText>
-          <ThemedText style={styles.subtitle}>ڈرائیور رپورٹ</ThemedText>
+          <ThemedText style={styles.title}>{t.reports}</ThemedText>
+          <ThemedText style={styles.subtitle}>{t.driverPerform}</ThemedText>
         </View>
       </View>
 
@@ -130,8 +132,8 @@ export default function DriversReportScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="document-text-outline" size={64} color="#cbd5e1" />
-              <ThemedText style={styles.emptyTitle}>No reports yet</ThemedText>
-              <ThemedText style={styles.emptySubtitle}>Driver submissions will appear here.</ThemedText>
+              <ThemedText style={styles.emptyTitle}>{t.noReports}</ThemedText>
+              <ThemedText style={styles.emptySubtitle}>{t.noReportsDesc}</ThemedText>
             </View>
           }
         />
@@ -146,6 +148,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingHorizontal: 24,
     paddingTop: 24,
     marginBottom: 32,

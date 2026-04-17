@@ -13,9 +13,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function CustomerHome() {
   const router = useRouter();
+  const { language, toggleLanguage, t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>({});
@@ -89,28 +91,35 @@ export default function CustomerHome() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.urduWelcome}>السلام علیکم</Text>
-            <Text style={styles.welcomeName}>{profile.first_name || profile.full_name || profile.username || "Customer"}</Text>
+            <Text style={styles.urduWelcome}>{t.assalamuAlaikum}</Text>
+            <Text style={styles.welcomeName}>{profile.first_name || profile.full_name || profile.username || t.customers}</Text>
             <TouchableOpacity style={styles.businessLink}>
               <Text style={styles.businessName}>{profile.owner_dairy_name || "Assigned Dairy"}</Text>
               <Ionicons name="checkmark-circle" size={14} color="#3b82f6" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={32} color="#000" />
-            <Text style={{ fontSize: 10, textAlign: 'center', color: '#6b7280' }}>Out</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.actionIconButton}
+              onPress={toggleLanguage}
+            >
+              <Text style={styles.languageText}>{language === 'en' ? 'UR' : 'EN'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={32} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Balance Card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.urduBalance}>آپ کا بقایا</Text>
-          <Text style={styles.balanceLabel}>Your balance</Text>
+          <Text style={styles.urduBalance}>{t.yourBalance}</Text>
+          <Text style={styles.balanceLabel}>{t.yourBalance}</Text>
           <Text style={styles.balanceAmount}>Rs {bal.toLocaleString()}</Text>
           <View style={[styles.balanceStatus, isClear ? {} : { backgroundColor: "rgba(239, 68, 68, 0.1)" }]}>
             <Ionicons name={isClear ? "checkmark-circle" : "alert-circle"} size={16} color={isClear ? "#22c55e" : "#ef4444"} />
             <Text style={[styles.statusText, isClear ? {} : { color: "#ef4444" }]}>
-              {isClear ? "All clear this month" : "Payment Due"}
+              {isClear ? t.allClear : t.paymentDue}
             </Text>
           </View>
         </View>
@@ -124,8 +133,8 @@ export default function CustomerHome() {
             <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
               <Ionicons name="pause" size={24} color="#2563eb" />
             </View>
-            <Text style={styles.actionLabel}>Pause</Text>
-            <Text style={styles.actionUrdu}>روکیں</Text>
+            <Text style={styles.actionLabel}>{t.pause}</Text>
+            <Text style={styles.actionUrdu}>{t.pauseUrdu}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -135,8 +144,8 @@ export default function CustomerHome() {
             <View style={[styles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
               <Ionicons name="list" size={24} color="#16a34a" />
             </View>
-            <Text style={styles.actionLabel}>Quantity</Text>
-            <Text style={styles.actionUrdu}>مقدار</Text>
+            <Text style={styles.actionLabel}>{t.quantity}</Text>
+            <Text style={styles.actionUrdu}>{t.quantityUrdu}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -146,15 +155,15 @@ export default function CustomerHome() {
             <View style={[styles.actionIcon, { backgroundColor: '#faf5ff' }]}>
               <Ionicons name="receipt" size={24} color="#9333ea" />
             </View>
-            <Text style={styles.actionLabel}>My Bill</Text>
-            <Text style={styles.actionUrdu}>میرا بل</Text>
+            <Text style={styles.actionLabel}>{t.myBill}</Text>
+            <Text style={styles.actionUrdu}>{t.myBillUrdu}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Today Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>TODAY</Text>
-          <Text style={styles.urduSectionTitle}>آج</Text>
+          <Text style={styles.sectionTitle}>{t.todayCaps}</Text>
+          <Text style={styles.urduSectionTitle}>{t.todayUrdu}</Text>
         </View>
         <View style={styles.deliveryCard}>
           <View style={styles.deliveryInfo}>
@@ -168,11 +177,11 @@ export default function CustomerHome() {
             <View>
               <Text style={styles.deliveryText}>
                 {deliveryStatus?.status === 'delivered' 
-                  ? `Delivered at ${new Date(deliveryStatus.delivered_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` 
-                  : (deliveryStatus?.status === 'paused' ? "Delivery Paused" : "Pending Delivery")}
+                  ? t.deliveredAt(new Date(deliveryStatus.delivered_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}))
+                  : (deliveryStatus?.status === 'paused' ? t.deliveryPaused : t.pendingDelivery)}
               </Text>
               <Text style={styles.urduDeliveryTime}>
-                {deliveryStatus?.status === 'delivered' ? 'ڈیلیور ہو گیا' : (deliveryStatus?.status === 'paused' ? 'ڈیلیوری رکی ہوئی ہے' : 'ڈیلیوری باقی ہے')}
+                {deliveryStatus?.status === 'delivered' ? t.doneCaps : (deliveryStatus?.status === 'paused' ? t.pauseUrdu : t.pendingDelivery)}
               </Text>
             </View>
           </View>
@@ -181,8 +190,8 @@ export default function CustomerHome() {
 
         {/* Weekly History */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>THIS WEEK</Text>
-          <Text style={styles.urduSectionTitle}>اس ہفتے</Text>
+          <Text style={styles.sectionTitle}>{t.thisWeekCaps}</Text>
+          <Text style={styles.urduSectionTitle}>{t.thisWeekUrdu}</Text>
         </View>
         <View style={styles.historyTable}>
           <View style={styles.tableHeader}>
@@ -199,7 +208,7 @@ export default function CustomerHome() {
               <Text style={styles.cellAmount}>Rs {parseFloat(item.total_amount || 0)}</Text>
             </View>
           )) : (
-            <Text style={{ textAlign: "center", padding: 20, color: "#9ca3af" }}>No history available yet.</Text>
+            <Text style={{ textAlign: "center", padding: 20, color: "#9ca3af" }}>{t.noHistory}</Text>
           )}
         </View>
       </ScrollView>
@@ -221,6 +230,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 24,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  actionIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  languageText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#3b82f6',
   },
   urduWelcome: {
     fontSize: 18,

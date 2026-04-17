@@ -3,17 +3,19 @@ import { ThemedView } from "@/components/themed-view";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View, Switch } from 'react-native';
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function OwnerSettings() {
+  const { t, language, toggleLanguage } = useLanguage();
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <ThemedText style={styles.title}>Settings</ThemedText>
-          <ThemedText style={styles.subtitle}>سیٹنگز</ThemedText>
+          <ThemedText style={styles.title}>{t.settings}</ThemedText>
+          <ThemedText style={styles.subtitle}>{t.preferences}</ThemedText>
         </View>
       </View>
 
@@ -23,19 +25,19 @@ export default function OwnerSettings() {
             <Ionicons name="business" size={32} color="#1d4ed8" />
           </View>
           <View>
-            <ThemedText style={styles.userName}>Owner Dashboard</ThemedText>
-            <ThemedText style={styles.userRole}>System Administrator</ThemedText>
+            <ThemedText style={styles.userName}>{t.ownerDashboard}</ThemedText>
+            <ThemedText style={styles.userRole}>{t.sysAdmin}</ThemedText>
           </View>
         </View>
 
         <View style={styles.menuSection}>
-          <ThemedText style={styles.sectionTitle}>General</ThemedText>
+          <ThemedText style={styles.sectionTitle}>{t.generalSettings}</ThemedText>
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}>
                 <Ionicons name="notifications-outline" size={20} color="#3b82f6" />
               </View>
-              <ThemedText style={styles.menuText}>Notifications</ThemedText>
+              <ThemedText style={styles.menuText}>{t.notifications}</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -45,18 +47,36 @@ export default function OwnerSettings() {
               <View style={[styles.iconBox, { backgroundColor: '#f0fdf4' }]}>
                 <Ionicons name="shield-checkmark-outline" size={20} color="#22c55e" />
               </View>
-              <ThemedText style={styles.menuText}>Security</ThemedText>
+              <ThemedText style={styles.menuText}>{t.security}</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
+          <View style={[styles.menuItem, { paddingVertical: 12 }]}>
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.iconBox, { backgroundColor: '#fefce8' }]}>
+                <Ionicons name="language-outline" size={20} color="#eab308" />
+              </View>
+              <ThemedText style={styles.menuText}>{t.languageStr}</ThemedText>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <ThemedText style={{ fontSize: 12, color: language === 'en' ? '#3b82f6' : '#9ca3af', fontWeight: 'bold' }}>EN</ThemedText>
+              <Switch 
+                value={language === 'ur'}
+                onValueChange={toggleLanguage}
+                trackColor={{ false: "#e2e8f0", true: "#e2e8f0" }}
+                thumbColor={language === 'ur' ? "#10b981" : "#3b82f6"}
+              />
+              <ThemedText style={{ fontSize: 12, color: language === 'ur' ? '#10b981' : '#9ca3af', fontWeight: 'bold' }}>UR</ThemedText>
+            </View>
+          </View>
 
-          <ThemedText style={[styles.sectionTitle, { marginTop: 24 }]}>Support</ThemedText>
+          <ThemedText style={[styles.sectionTitle, { marginTop: 24 }]}>{t.support}</ThemedText>
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
               <View style={[styles.iconBox, { backgroundColor: '#faf5ff' }]}>
                 <Ionicons name="help-circle-outline" size={20} color="#a855f7" />
               </View>
-              <ThemedText style={styles.menuText}>Help Center</ThemedText>
+              <ThemedText style={styles.menuText}>{t.helpCenter}</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -66,7 +86,7 @@ export default function OwnerSettings() {
               <View style={[styles.iconBox, { backgroundColor: '#fff7ed' }]}>
                 <Ionicons name="information-circle-outline" size={20} color="#f97316" />
               </View>
-              <ThemedText style={styles.menuText}>About App</ThemedText>
+              <ThemedText style={styles.menuText}>{t.aboutApp}</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
           </TouchableOpacity>
@@ -77,7 +97,7 @@ export default function OwnerSettings() {
           onPress={() => router.replace("/login")}
         >
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <ThemedText style={styles.logoutText}>Sign Out</ThemedText>
+          <ThemedText style={styles.logoutText}>{t.signOut}</ThemedText>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -90,9 +110,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingHorizontal: 24,
     paddingTop: 24,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,

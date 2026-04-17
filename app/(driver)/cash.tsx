@@ -18,9 +18,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ENDPOINTS } from "../../constants/Api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 
 export default function DriverCashScreen() {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -128,21 +130,21 @@ export default function DriverCashScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.headerRow}>
-          <ThemedText style={styles.title}>Record Cash</ThemedText>
-          <ThemedText style={styles.subtitle}>نقدی وصولی کا اندراج کریں</ThemedText>
+          <ThemedText style={styles.title}>{t.recordCash}</ThemedText>
+          <ThemedText style={styles.subtitle}>{t.recordCashUrdu}</ThemedText>
         </View>
 
         <ThemedView style={styles.formCard}>
           <View style={styles.formHeader}>
             <Ionicons name="cash-outline" size={24} color="#065f46" />
-            <ThemedText style={styles.formTitle}>Payment Details</ThemedText>
+            <ThemedText style={styles.formTitle}>{t.paymentDetails}</ThemedText>
           </View>
 
           <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>SELECT CUSTOMER</ThemedText>
+            <ThemedText style={styles.label}>{t.selectCustomerCaps}</ThemedText>
             <Pressable style={styles.selector} onPress={togglePicker}>
               <ThemedText style={{ color: selectedCustomer ? "#111827" : "#94a3b8", fontWeight: "700" }}>
-                {selectedCustomer ? (selectedCustomer.first_name || selectedCustomer.username) : "Choose a customer..."}
+                {selectedCustomer ? (selectedCustomer.first_name || selectedCustomer.username) : t.chooseCustomer}
               </ThemedText>
               <Ionicons name={showCustPicker ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
             </Pressable>
@@ -180,7 +182,7 @@ export default function DriverCashScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>ENTER AMOUNT</ThemedText>
+            <ThemedText style={styles.label}>{t.enterAmountCaps}</ThemedText>
             <View style={styles.currencyInputWrap}>
               <ThemedText style={styles.currencyPrefix}>Rs</ThemedText>
               <TextInput
@@ -194,7 +196,7 @@ export default function DriverCashScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>PAYMENT METHOD</ThemedText>
+            <ThemedText style={styles.label}>{t.paymentMethodCaps}</ThemedText>
             <Pressable style={styles.selector} onPress={toggleMethodPicker}>
               <ThemedText style={{ color: "#111827", fontWeight: "700" }}>{method}</ThemedText>
               <Ionicons name={showMethodPicker ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
@@ -238,7 +240,7 @@ export default function DriverCashScreen() {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <ThemedText style={styles.saveBtnText}>Record & Sync</ThemedText>
+              <ThemedText style={styles.saveBtnText}>{t.recordSync}</ThemedText>
             )}
           </TouchableOpacity>
         </ThemedView>
