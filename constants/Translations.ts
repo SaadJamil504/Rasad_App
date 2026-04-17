@@ -138,7 +138,16 @@ export const TRANSLATIONS: any = {
     noReports: "No reports yet",
     noReportsDesc: "Driver submissions will appear here.",
     
-    // Settings
+    // Live Deliveries
+    liveDeliveries: "Live Deliveries",
+    noDeliveriesToday: "No deliveries scheduled for today",
+    searchPlaceholder: "Search by name or phone...",
+    filterByRoute: "Filter by Route",
+    allStatus: "All",
+    route: "Route",
+    completed: "Completed",
+    paused: "Paused",
+    history: "History",
     settings: "Settings",
     preferences: "Preferences",
     languageStr: "Language / زبان",
@@ -334,7 +343,16 @@ export const TRANSLATIONS: any = {
     noReports: "کوئی رپورٹ نہیں",
     noReportsDesc: "ڈرائیوروں کی جمع کی گئی رپورٹس یہاں نظر آئیں گی۔",
     
-    // Settings
+    // Live Deliveries
+    liveDeliveries: "لائیو ڈیلیوریز",
+    noDeliveriesToday: "آج کوئی ڈیلیوری شیڈول نہیں ہے۔",
+    searchPlaceholder: "نام یا فون سے تلاش کریں...",
+    filterByRoute: "روٹ کے مطابق دیکھیں",
+    allStatus: "سب",
+    route: "روٹ",
+    completed: "مکمل",
+    paused: "روکی ہوئی",
+    history: "ہسٹری",
     settings: "سیٹنگز",
     preferences: "ترجیحات",
     languageStr: "زبان / Language",

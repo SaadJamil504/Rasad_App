@@ -69,6 +69,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="live-deliveries"
+        options={{
+          title: 'Live',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="radio-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="drivers-report"
         options={{
           title: 'Reports',

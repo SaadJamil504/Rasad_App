@@ -16,6 +16,7 @@ export const ENDPOINTS = {
   PROFILE: `${BASE_URL}/accounts/profile/`,
   ROUTES: `${BASE_URL}/accounts/routes/`,
   DELIVERIES: `${BASE_URL}/accounts/deliveries/daily/`,
+  OWNER_DAILY_DELIVERIES: `${BASE_URL}/accounts/deliveries/owner-daily/`,
 
   CUSTOMERS: `${BASE_URL}/accounts/staff/`,
   CUSTOMERS_LIST: `${BASE_URL}/accounts/staff/?role=customer`,
